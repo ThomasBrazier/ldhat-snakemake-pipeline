@@ -1,0 +1,8 @@
+name: vcftools
+channels:
+  - bioconda
+dependencies:
+  - vcftools=0.1.16
+  - htslib=1.14
+  - samtools=1.14
+  - bcftools=1.14

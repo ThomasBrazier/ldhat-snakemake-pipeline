@@ -1,0 +1,2 @@
+* STRUCTURE
+** TODO Separate in two snakefiles: first part population; second part chromosomes
