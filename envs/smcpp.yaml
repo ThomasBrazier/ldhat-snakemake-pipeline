@@ -1,0 +1,5 @@
+name: smcpp
+channels:
+  popgenmethods
+dependencies:
+  - smcpp

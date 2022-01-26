@@ -1,0 +1,5 @@
+name: singularity
+channels:
+  conda-forge
+dependencies:
+  - singularity

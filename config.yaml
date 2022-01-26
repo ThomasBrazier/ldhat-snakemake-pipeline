@@ -1,0 +1,9 @@
+sample: "Hordeum_vulgare_Dreissig2019"
+chromosome: "1"
+population: "1"
+mu: 1.28e-8
+theta: 0.01
+knots: 8 # Number of knots in SMC++ estimate
+maf: 0.05
+missing: 0.1
+maxmissing: 0.9

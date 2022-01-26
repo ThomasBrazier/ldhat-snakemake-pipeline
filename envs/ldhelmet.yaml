@@ -1,0 +1,5 @@
+name: ldhelmet
+channels:
+  bioconda
+dependencies:
+  - ldhelmet
