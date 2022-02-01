@@ -1,0 +1,8 @@
+name: Renv
+channels:
+  - conda-forge
+dependencies:
+  - r-base
+  - r-ade4
+  - r-adegenet
+  - r-vcfr

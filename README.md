@@ -4,7 +4,11 @@
 
 ### Dependencies
 
+To install conda environment at first run, use
 
+```
+snakemake --use-conda
+```
 
 ## Usage
 
@@ -23,7 +27,10 @@ pop=pop
 chrom=chrom
 snakemake --directory $wd --config sample=$sample pop=$pop chrom=$chrom
 ```
+### Files
 
+* dataset.vcf.gz, a tabix vcf file, bgzipped
+* samplelist, a one column text file with a list of individuals to keep in the original vcf
 
 
 ## Options
