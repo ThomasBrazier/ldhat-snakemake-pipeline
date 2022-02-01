@@ -73,6 +73,7 @@ checkpoint choose_population:
         "[ ! -z '${pop}' ] && echo ${pop} > {pop} || echo 'Set a population to sample in the 'pop' file' "
 
 
+
 # input function for the rule sample_population
 def is_popexist(wildcards):
 # decision based on the existence of a non empty 'pop' file
