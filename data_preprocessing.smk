@@ -13,7 +13,7 @@ configfile: "config.yaml"
 """In addition to the configfile statement, config values can be overwritten via the command line"""
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
 
-wdir='data/' + dataset
+wdir = 'data/' + dataset
 
 wildcard_constraints:
     wdir=wdir,
@@ -99,13 +99,16 @@ rule faststructure:
         expand("{wdir}/structure/faststructure.{k}.varQ", wdir=wdir, k=range(1,7))
     log:
         expand("{wdir}/logs/faststructure.{k}.log", wdir=wdir, k=range(1,7))
-    conda:
-        "envs/faststructure.yaml"
+    #conda:
+    #    "envs/faststructure.yaml"
+    container:
+        "docker://quay.io/biocontainers/faststructure:latest"
     shell:
         """
         for k in {{1..7}}
         do
-        python $CONDA_PREFIX/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
+            singularity run -bind {wdir}/{dataset}:/data biocontainers/faststructure python structure.py -K k --input=data/{input.bed} --output=data/structure/faststructure --full --seed=100
+            #python $CONDA_PREFIX/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
         done
         """
 

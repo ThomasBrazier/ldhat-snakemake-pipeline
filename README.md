@@ -7,8 +7,8 @@
 To install conda environments at first run, use
 
 ```
-snakemake --s data_preprocessing.smk --use-conda
-snakemake --use-conda
+snakemake --s data_preprocessing.smk --use-conda --use-singularity
+snakemake --use-conda --use-singularity
 ```
 
 ## Usage
