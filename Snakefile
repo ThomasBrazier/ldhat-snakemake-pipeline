@@ -1,6 +1,5 @@
 """
 Pipeline to estimate fine-scale recombination maps from polymorphism data
-LDhelmet is the central element
 """
 
 """
@@ -12,7 +11,6 @@ configfile: "config.yaml"
 
 """In addition to the configfile statement, config values can be overwritten via the command line"""
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
-pop=config["pop"] # Specify the population once you have defined it with genetic clustering
 chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' dataset
 
 wdir='data/' + dataset
@@ -26,56 +24,35 @@ rule all:
     One ring to rule them all"
     """
     input:
-        vcf = expand('{wdir}/{dataset}.trimmed.vcf.gz',wdir=wdir,dataset=dataset)
+        vcf = expand('{wdir}/{dataset}.pop.vcf.gz',wdir=wdir,dataset=dataset)
     shell:
         "echo 'Finished'"
 
 # The global dataset is trimmed for SNPs
 # and individuals if a 'samplelist' file is provided
 # Otherwise all individuals are kept
-rule trimming_vcf:
+rule sampling_pop:
     """
     A first step to trim every 'sample' dataset to the same quality criteria
     """
     input:
-        "{wdir}/{dataset}.vcf.gz"
+        vcf = "{wdir}/{dataset}.vcf.gz"
+        poplist = "{wdir}/poplist"
     output:
-    	"{wdir}/{dataset}.trimmed.vcf.gz"
+    	"{wdir}/{dataset}.pop.vcf.gz"
     log:
-        "{wdir}/logs/{dataset}.trimming_vcf.log"
+        "{wdir}/logs/{dataset}.sampling_pop.log"
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-        if [ -f "{wdir}/samplelist" ];
+        if [ -f "{input.poplist}" ];
         then
-            vcftools --gzvcf {input} --out {wdir}/out --recode --keep {wdir}/samplelist --maf config[maf] --max-missing config[maxmissing]
-            mv {wdir}/out.recode.vcf {wdir}/{dataset}.trimmed.vcf
-            bgzip -f {wdir}/{dataset}.trimmed.vcf
+            vcftools --gzvcf {input.vcf} --out {wdir}/out --recode --keep {input.poplist} --maf config[maf] --max-missing config[maxmissing]
+            mv {wdir}/out.recode.vcf {wdir}/{dataset}.pop.vcf
+            bgzip -f {wdir}/{dataset}.pop.vcf
             rm {wdir}/out.log
         else
-            vcftools --gzvcf {input} --out {wdir}/out --recode --maf config[maf] --maxmissing config[maxmissing]
-            mv {wdir}/out.recode.vcf {wdir}/{dataset}.trimmed.vcf
-            bgzip {wdir}/{dataset}.trimmed.vcf
-            rm {wdir}/out.log
+            echo "<poplist> is a mandatory input file"
         fi
         """
-
-rule population_struture:
-    """
-    Detects population structure and infer genetic clusters
-    Produces diagnostic plots and summary statistics
-    to help selecting the best population for recombination map
-    """
-    input:
-        "{wdir}/{dataset}.trimmed.vcf.gz"
-    output:
-        dapc_plot = "{wdir}/popstructure/{dataset}.DAPC.pdf"
-        summary_stats = "{wdir}/popstructure/{dataset}.statistics.csv}"
-    log:
-        "{wdir}/logs/{dataset}.population_structure.log"
-    conda:
-        "envs/Renv.yaml"
-    shell:
-        "Rscript popstructure.R {input}"
-
