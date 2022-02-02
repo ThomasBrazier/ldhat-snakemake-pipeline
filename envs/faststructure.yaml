@@ -1,4 +1,4 @@
-name: vcftools
+name: faststructure
 channels:
   - bioconda
 dependencies:
