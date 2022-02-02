@@ -107,7 +107,7 @@ rule faststructure:
         """
         for k in {{1..7}}
         do
-            singularity run -bind {wdir}/{dataset}:/data biocontainers/faststructure python structure.py -K k --input=data/{input.bed} --output=data/structure/faststructure --full --seed=100
+            singularity run -bind {wdir}/{dataset}:data tombrazier/faststructure python structure.py -K k --input=data/{wdir}/{dataset} --output=data/structure/faststructure --full --seed=100
             #python $CONDA_PREFIX/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
         done
         """
