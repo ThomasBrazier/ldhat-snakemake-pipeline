@@ -1,5 +1,4 @@
 dataset: "Oryza_sativa_McCouch2016"
-pop: 1
 chrom: "1"
 mu: 1.28e-8
 theta: 0.01

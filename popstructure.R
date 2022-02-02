@@ -38,8 +38,9 @@ sub.genlight = genlight[,sample(1:genlight$n.loc, n.loci)]
 
 
 
-k.clusters = find.clusters(sub.genlight, max.n.clust = 5)
+k.clusters = find.clusters(sub.genlight, max.n.clust = 5, choose.n.clust = FALSE)
 
+cat("Done")
 
 # Find the best K
 
