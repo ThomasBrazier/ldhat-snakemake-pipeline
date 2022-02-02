@@ -24,9 +24,10 @@ rule all:
     One ring to rule them all"
     """
     input:
-        poplist = "{wdir}/poplist"
+        expand("{wdir}/poplist", wdir=wdir)
     shell:
         "echo 'Preprocessing: Finished to infer population structure'"
+
 
 # The global dataset is trimmed for SNPs
 # and individuals if a 'samplelist' file is provided
@@ -59,6 +60,7 @@ rule trimming_vcf:
         fi
         """
 
+
 # Use vcftools to export to .ped format with the --plink switch.  Then convert the .ped to .bed using Plink.  Faststructure will read the .bed format files (there are three files for each project)
 rule vcf2structure:
     """
@@ -67,11 +69,11 @@ rule vcf2structure:
     input:
         "{wdir}/{dataset}.trimmed.vcf.gz"
     output:
-        bed = "{wdir}/{dataset}.bed"
-        bam = "{wdir}/{dataset}.fam"
+        bed = "{wdir}/{dataset}.bed",
+        bam = "{wdir}/{dataset}.fam",
         bim = "{wdir}/{dataset}.bim"
     log:
-        "{wdir}/logs/{dataset}.population_structure.log"
+        "{wdir}/logs/{dataset}.vcf2structure.log"
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -88,14 +90,38 @@ rule faststructure:
     to help selecting the best population for recombination map
     """
     input:
-        "{wdir}/{dataset}.trimmed.vcf.gz"
+        bed = expand("{wdir}/{dataset}.bed", wdir=wdir, dataset=dataset)
     output:
-        dapc_plot = "{wdir}/popstructure/{dataset}.DAPC.pdf"
-        summary_stats = "{wdir}/popstructure/{dataset}.statistics.csv}"
+        expand("{wdir}/structure/faststructure.{k}.log", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.meanP", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.varP", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.meanQ", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.varQ", wdir=wdir, k=range(1,7))
     log:
-        "{wdir}/logs/{dataset}.population_structure.log"
+        expand("{wdir}/logs/faststructure.{k}.log", wdir=wdir, k=range(1,7))
     conda:
         "envs/faststructure.yaml"
     shell:
-        "faststructure"
+        """
+        for k in {{1..7}}
+        do
+            python structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
+        done
+        """
+
+
+rule poplist:
+    """
+    Identify the best K and classify individuals
+    """
+    input:
+        expand("{wdir}/structure/faststructure.{k}.log", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.meanP", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.varP", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.meanQ", wdir=wdir, k=range(1,7)),
+        expand("{wdir}/structure/faststructure.{k}.varQ", wdir=wdir, k=range(1,7))
+    output:
+        "{wdir}/poplist"
+    shell:
+        "echo 'poplist' > {wdir}/poplist"
 

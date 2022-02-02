@@ -6,4 +6,4 @@ dependencies:
   - htslib
   - samtools
   - bcftools
-  - plink
+  - plink>=1.9
