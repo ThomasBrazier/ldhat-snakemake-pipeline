@@ -4,9 +4,10 @@
 
 ### Dependencies
 
-To install conda environment at first run, use
+To install conda environments at first run, use
 
 ```
+snakemake --s data_preprocessing.smk --use-conda
 snakemake --use-conda
 ```
 
