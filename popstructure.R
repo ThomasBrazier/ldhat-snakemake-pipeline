@@ -9,7 +9,7 @@
 #   args[2] = "out.txt"
 # }
 
-vcf_file = "/home/tbrazier/Academic/LDRecombinationMaps_pipeline/data/Oryza_sativa_McCouch2016/Oryza_sativa_McCouch2016.trimmed.vcf.gz"
+# vcf_file = "~/Academic/LDRecombinationMaps-pipeline/data/Oryza_sativa_McCouch2016/Oryza_sativa_McCouch2016.trimmed.vcf.gz"
 # vcf_file = args[1]
 
 # LOADING ENVIRONMENT
@@ -24,8 +24,8 @@ library(vcfR)
 # rm(vcf)
 # gc()
 
-# save(genlight, file = "/home/tbrazier/Academic/LDRecombinationMaps_pipeline/data/Oryza_sativa_McCouch2016/genlight.Rda")
-load("/home/tbrazier/Academic/LDRecombinationMaps_pipeline/data/Oryza_sativa_McCouch2016/genlight.Rda")
+# save(genlight, file = "/home/tbrazier/Academic/LDRecombinationMaps-pipeline/data/Oryza_sativa_McCouch2016/genlight.Rda")
+load("~/Academic/LDRecombinationMaps-pipeline/data/Oryza_sativa_McCouch2016/genlight.Rda")
 
 genlight
 
