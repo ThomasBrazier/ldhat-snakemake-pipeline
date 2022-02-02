@@ -105,7 +105,7 @@ rule faststructure:
         """
         for k in {{1..7}}
         do
-        python envs/faststructure/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
+        python $CONDA_PREFIX/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
         done
         """
 
