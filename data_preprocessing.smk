@@ -53,7 +53,7 @@ rule trimming_vcf:
             bgzip -f {wdir}/{dataset}.trimmed.vcf
             rm {wdir}/out.log
         else
-            vcftools --gzvcf {input} --out {wdir}/out --recode --maf config[maf] --maxmissing config[maxmissing]
+            vcftools --gzvcf {input} --out {wdir}/out --recode --maf config[maf] --max-missing config[maxmissing]
             mv {wdir}/out.recode.vcf {wdir}/{dataset}.trimmed.vcf
             bgzip {wdir}/{dataset}.trimmed.vcf
             rm {wdir}/out.log
@@ -105,7 +105,7 @@ rule faststructure:
         """
         for k in {{1..7}}
         do
-            python structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
+        python envs/faststructure/bin/structure.py -K k --input={input.bed} --output={wdir}/structure/faststructure
         done
         """
 
