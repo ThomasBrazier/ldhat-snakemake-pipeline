@@ -6,4 +6,4 @@ knots: 8 # Number of knots in SMC++ estimate
 maf: 0.05
 missing: 0.1
 maxmissing: 0.9
-
+maxk: 9

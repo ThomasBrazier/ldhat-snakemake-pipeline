@@ -4,6 +4,12 @@
 
 ### Dependencies
 
+Singularity images are required. Run in the directory
+
+```
+singularity pull docker://tombrazier/faststructure
+```
+
 To install conda environments at first run, use
 
 ```
