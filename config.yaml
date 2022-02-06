@@ -1,9 +1,15 @@
+cores: 16
+# Sample
 dataset: "Oryza_sativa_McCouch2016"
 chrom: "1"
-mu: 1.28e-8
-theta: 0.01
-knots: 8 # Number of knots in SMC++ estimate
 maf: 0.05
 missing: 0.1
 maxmissing: 0.9
-maxk: 9
+# data_preprocessing
+maxk: 7
+# recombination map processing
+K: 3
+pop: 2
+mu: 1.28e-8
+theta: 0.01
+knots: 8 # Number of knots in SMC++ estimate

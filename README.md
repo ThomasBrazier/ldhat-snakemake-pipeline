@@ -13,7 +13,7 @@ singularity pull docker://tombrazier/faststructure
 To install conda environments at first run, use
 
 ```
-snakemake --s data_preprocessing.smk --use-conda --use-singularity
+snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores 1
 snakemake --use-conda --use-singularity
 ```
 
@@ -25,15 +25,21 @@ The pipeline can be run for one/many samples and/or populations. Thus you need t
 * chromosome to sample
 Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
 
-The workflow take into consideration the directory where the sample data is stored. Thus working directory must be set when invoking Snakemake.
+The workflow take into consideration the directory where the sample data is stored. Thus working directory must be set in 'config.yaml' when invoking Snakemake.
+
+TO run the first step of the pipeline, invoke the 'data_preprocessing.snake' file to identify population structure in your dataset.
 
 ```
-sample=sample
-wd='/data/dir'
-pop=pop
-chrom=chrom
-snakemake --directory $wd --config sample=$sample pop=$pop chrom=$chrom
+ncores=8
+snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores
 ```
+
+Once population structure is inferred, run the main pipeline after specifying the chosen number of gneetic clusters to consider (K) and the population to sample in your config.yaml.
+
+```
+snakemake -s Snakefile --use-conda --use-singularity --cores $ncores
+```
+
 ### Files
 
 * dataset.vcf.gz, a tabix vcf file, bgzipped
