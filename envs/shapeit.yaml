@@ -1,4 +1,10 @@
 name: shapeit
-dependencies:
+channels:
+  - bioconda
   - dranew
+dependencies:
   - shapeit
+  - vcftools
+  - htslib
+  - samtools
+  - openssl=1.0
