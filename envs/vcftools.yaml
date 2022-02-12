@@ -4,6 +4,6 @@ channels:
 dependencies:
   - vcftools
   - htslib
-  - samtools
+  - samtools=1.9
   - bcftools
   - plink>=1.9

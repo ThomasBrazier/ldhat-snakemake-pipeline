@@ -20,6 +20,8 @@ Singularity images are required. Run in the directory:
 ```
 singularity pull docker://tombrazier/faststructure
 singularity pull docker://terhorst/smcp
+singularity pull docker://tombrazier/pyrho
+singularity pull docker://tombrazier/ldhat
 ```
 
 To install conda environments at first run, use
@@ -47,6 +49,8 @@ TO run the first step of the pipeline, invoke the 'data_preprocessing.snake' fil
 ncores=8
 snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores --dataset <dataset>
 ```
+
+By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
 
 Once population structure is inferred, run the main pipeline after specifying the chosen number of genetic clusters to consider (K) and the population to sample in your config.yaml.
 
