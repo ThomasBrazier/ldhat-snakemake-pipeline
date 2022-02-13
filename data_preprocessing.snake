@@ -14,7 +14,7 @@ configfile: "config.yaml"
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
 maxk=config["maxk"]
 
-wdir = 'data/' + dataset
+wdir={config["workingdir"]} + dataset
 
 wildcard_constraints:
     wdir=wdir,
@@ -25,7 +25,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        expand("{wdir}/indlist", wdir=wdir)
+        expand("{wdir}/structure/popstatistics.csv", wdir=wdir)
     shell:
         "echo 'Preprocessing: Finished to infer population structure'"
 
@@ -59,6 +59,10 @@ rule trimming_vcf:
             bgzip {wdir}/{dataset}.trimmed.vcf
             rm {wdir}/out.log
         fi
+        # Collapse duplicate SNPs with identical positions
+        bcftools norm -d all {wdir}/{dataset}.trimmed.vcf.gz -o {wdir}/{dataset}.trimmed.vcf
+        rm {wdir}/{dataset}.trimmed.vcf.gz
+        bgzip {wdir}/{dataset}.trimmed.vcf
         """
 
 
@@ -103,10 +107,17 @@ rule faststructure:
         expand("{wdir}/logs/faststructure.{k}.log", wdir=wdir, k=range(1,maxk+1))
     shell:
         """
+<<<<<<< HEAD
         #for k in {{1..{maxk}}}
         #do
         singularity exec --bind {wdir}:/faststructure/data faststructure.simg python /faststructure/structure.py -K {k} --input=/faststructure/data/{dataset} --output=/faststructure/data/structure/faststructure --full --seed=100
         #done
+=======
+        for k in $(seq 1 {maxk})
+        do
+            singularity exec --bind $PWD:/mnt faststructure.simg python /faststructure/structure.py -K $k --input=/mnt/{wdir}/{dataset} --output=/mnt/{wdir}/structure/faststructure --full --seed=42
+        done
+>>>>>>> 9038ac8bc8f4066987bb370ca72d75c572f11946
         """
 
 
@@ -151,7 +162,7 @@ rule choose_k:
 
 rule indlist:
     """
-    Identify the best K and classify individuals
+    The list of individuals
     """
     input:
         "{wdir}/structure/chooseK"
@@ -162,5 +173,51 @@ rule indlist:
     shell:
         """
         bcftools query -l {wdir}/{dataset}.trimmed.vcf.gz > {wdir}/indlist
+        """
+
+
+rule k_statistics:
+    """
+    Report summary statistics for each population in each K chosen
+    to help identify the best config K/population
+    Pop. statistic csv file contains columns K, pop number and then columns of statistics
+    Headers, statistics are:
+    - number of individuals
+    - missing data per locus (proportion)
+    - missing data per individual (proportion)
+    - He
+    - Ho
+    - Fis
+    """
+    input:
+        "{wdir}/indlist"
+    output:
+        "{wdir}/structure/popstatistics.csv"
+    log:
+        "{wdir}/logs/k_statistics.log"
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        echo K pop n missing_locus missing_ind pi He Ho Fis Admixture > {wdir}/structure/popstatistics.csv
+        # For each K
+        maxk={config[maxk]}
+        for K in {1..$maxk}; do
+        # Get the list of individuals of each population
+        perl -ane '$r = 0; for my $i (1 .. $#F) {{$r = $i if $F[$i] > $F[$r];}} print $r + 1, " ";' < {wdir}/structure/faststructure.$K.meanQ > {wdir}/structure/clusters.tmp
+        sed -i -e "s/\\s\\+/\\n/g" {wdir}/structure/clusters.tmp
+        paste {wdir}/indlist {wdir}/structure/cluster.tmp > {wdir}/structure/cluster2.tmp
+        paste {wdir}/structure/cluster2.tmp {wdir}/structure/faststructure.$K.meanQ > {wdir}/structure/cluster.$K.list
+        rm *.tmp
+        # For each population, compute statistics
+        for pop in {1..$K}; do
+        awk -F' ' '{{if($2==$pop) print $1}}' {wdir}/structure/cluster.$K.list > {wdir}/structure/poplist.$K.$pop
+        # Compute popstatistics
+        n=$(wc -l {wdir}/structure/poplist.$K.$pop)
+        vcftools -gzvcf {wdir}/{dataset}.trimmed.vcf.gz --keep {wdir}/structure/poplist.$K.$pop --missing-indv --missing-site --site-pi --het
+        # Add to the popstatistics csv files
+        echo $K $pop $n >> {wdir}/structure/popstatistics.csv
+        done
+        done
         """
 

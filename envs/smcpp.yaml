@@ -1,5 +1,12 @@
 name: smcpp
 channels:
-  popgenmethods
+  - conda-forge
+  - terhorst
+  - bioconda
 dependencies:
-  - smcpp
+  - python=3.8
+  - smcpp==1.3.9
+  - vcftools
+  - htslib
+  - samtools
+  - bcftools
