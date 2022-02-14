@@ -95,7 +95,8 @@ rule faststructure:
     to help selecting the best population for recombination map
     """
     input:
-        bed = expand("{wdir}/{dataset}.bed", wdir=wdir, dataset=dataset)
+        bed = expand("{wdir}/{dataset}.bed", wdir=wdir, dataset=dataset),
+        k = expand("{k}", k=range(1,maxk+1))
     output:
         expand("{wdir}/structure/faststructure.{k}.log", wdir=wdir, k=range(1,maxk+1)),
         expand("{wdir}/structure/faststructure.{k}.meanP", wdir=wdir, k=range(1,maxk+1)),
@@ -106,10 +107,17 @@ rule faststructure:
         expand("{wdir}/logs/faststructure.{k}.log", wdir=wdir, k=range(1,maxk+1))
     shell:
         """
+<<<<<<< HEAD
+        #for k in {{1..{maxk}}}
+        #do
+        singularity exec --bind {wdir}:/faststructure/data faststructure.simg python /faststructure/structure.py -K {k} --input=/faststructure/data/{dataset} --output=/faststructure/data/structure/faststructure --full --seed=100
+        #done
+=======
         for k in $(seq 1 {maxk})
         do
             singularity exec --bind $PWD:/mnt faststructure.simg python /faststructure/structure.py -K $k --input=/mnt/{wdir}/{dataset} --output=/mnt/{wdir}/structure/faststructure --full --seed=42
         done
+>>>>>>> 9038ac8bc8f4066987bb370ca72d75c572f11946
         """
 
 
