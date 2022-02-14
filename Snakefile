@@ -15,7 +15,7 @@ K=config["K"]
 pop=config["pop"]
 
 
-wdir={config["workingdir"]} + dataset
+wdir=config["workingdir"] + dataset
 
 wildcard_constraints:
     wdir=wdir,

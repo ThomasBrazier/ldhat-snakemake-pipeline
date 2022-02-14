@@ -14,7 +14,7 @@ configfile: "config.yaml"
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
 maxk=config["maxk"]
 
-wdir={config["workingdir"]} + dataset
+wdir=config['workingdir'] + dataset
 
 wildcard_constraints:
     wdir=wdir,
@@ -49,12 +49,12 @@ rule trimming_vcf:
         """
         if [ -f "{wdir}/samplelist" ];
         then
-            vcftools --gzvcf {input} --out {wdir}/out --recode --keep {wdir}/samplelist --maf config[maf] --max-missing config[maxmissing]
+            vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --keep {wdir}/samplelist --maf config[maf] --max-missing config[maxmissing]
             mv {wdir}/out.recode.vcf {wdir}/{dataset}.trimmed.vcf
             bgzip -f {wdir}/{dataset}.trimmed.vcf
             rm {wdir}/out.log
         else
-            vcftools --gzvcf {input} --out {wdir}/out --recode --maf config[maf] --max-missing config[maxmissing]
+            vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --maf config[maf] --max-missing config[maxmissing]
             mv {wdir}/out.recode.vcf {wdir}/{dataset}.trimmed.vcf
             bgzip {wdir}/{dataset}.trimmed.vcf
             rm {wdir}/out.log
