@@ -1,6 +1,9 @@
+cluster.yaml # Must stay private
 .DS_Store
 data/
 *.simg
+*.sif
+*.out
 .snakemake/
 # Byte-compiled / optimized / DLL files
 __pycache__/

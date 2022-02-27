@@ -158,13 +158,13 @@ rule demography:
         individuals=$(cat {wdirpop}/subsetpop | tr '\n' ',' | sed "s/,$//g")
         chromosomes=$(zcat {wdirpop}/{dataset}.pop.vcf.gz | awk '{{ print $1 }}' | sort | uniq | grep -v '^#')
         for c in $chromosomes; do
-        singularity exec --bind $PWD:/mnt smcpp.simg smc++ vcf2smc --ignore-missing /mnt/{wdirpop}/{dataset}.pop.vcf.gz /mnt/{wdirpop}/smc/vcf2smc.$c $c pop1:$individuals
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc --ignore-missing /mnt/{wdirpop}/{dataset}.pop.vcf.gz /mnt/{wdirpop}/smc/vcf2smc.$c $c pop1:$individuals
         done
         paths=$(for i in $chromosomes; do echo /mnt/{wdirpop}/smc/vcf2smc.$i; done | tr '\n' ' ')
-        singularity exec --bind $PWD:/mnt smcpp.simg smc++ estimate -o /mnt/{wdirpop}/smc/ {config[mu]} $paths --cores {config[cores]}
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smc/ {config[mu]} $paths --cores {config[cores]}
         mv {wdirpop}/smc/model.final.json {wdirpop}/smc/{dataset}.model.final.json
-        singularity exec --bind $PWD:/mnt smcpp.simg smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.pdf /mnt/{wdirpop}/smc/{dataset}.model.final.json -c
-        singularity exec --bind $PWD:/mnt smcpp.simg smc++ posterior /mnt/{wdirpop}/smc/{dataset}.model.final.json /mnt/{wdirpop}/smc/{dataset}.posterior.smc $paths
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.pdf /mnt/{wdirpop}/smc/{dataset}.model.final.json -c
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior /mnt/{wdirpop}/smc/{dataset}.model.final.json /mnt/{wdirpop}/smc/{dataset}.posterior.smc $paths
         mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
         """
 
@@ -269,7 +269,7 @@ rule make_table:
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
         N=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.simg pyrho make_table --samplesize $n --approx --moran_pop_size $N --numthreads {config[cores]} --mu {config[mu]} --outfile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf  --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv
+        singularity exec --bind $PWD:/mnt pyrho.sif pyrho make_table --samplesize $n --approx --moran_pop_size $N --numthreads {config[cores]} --mu {config[mu]} --outfile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf  --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv
         """
 
 
@@ -299,7 +299,7 @@ rule hyperparam:
         #coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.simg pyrho hyperparam --samplesize $n --blockpenalty {config[bpen]} --windowsize {config[windowsize]} --num_sims {config[num_sims]} --numthreads {config[cores]} --tablefile /mnt/{input} --mu {config[mu]} --ploidy {config[ploidy]} --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv --outfile /mnt/{output} --logfile /mnt/{wdirpop}/pyrho/hyperparam.{chrom}.log
+        singularity exec --bind $PWD:/mnt pyrho.sif pyrho hyperparam --samplesize $n --blockpenalty {config[bpen]} --windowsize {config[windowsize]} --num_sims {config[num_sims]} --numthreads {config[cores]} --tablefile /mnt/{input} --mu {config[mu]} --ploidy {config[ploidy]} --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv --outfile /mnt/{output} --logfile /mnt/{wdirpop}/pyrho/hyperparam.{chrom}.log
         """
 
 
@@ -338,7 +338,7 @@ rule optimize:
         bpen=$(cat {wdirpop}/pyrho/{dataset}.bpen.{chrom})
         windowsize=50
         bpen=50
-        singularity exec --bind $PWD:/mnt pyrho.simg pyrho optimize --vcffile /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz --windowsize $windowsize --blockpenalty $bpen --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --ploidy {config[ploidy]} --outfile /mnt/{output} --numthreads {config[cores]}
+        singularity exec --bind $PWD:/mnt pyrho.sif pyrho optimize --vcffile /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz --windowsize $windowsize --blockpenalty $bpen --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --ploidy {config[ploidy]} --outfile /mnt/{output} --numthreads {config[cores]}
         """
 
 
@@ -355,7 +355,7 @@ rule compute_r2:
     shell:
         """
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-        singularity exec --bind $PWD:/mnt pyrho.simg pyrho compute_r2 --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --samplesize $n --quantiles 0.025,0.25,0.5,0.75,0.975 --compute_mean > {wdirpop}/pyrho/{dataset}.r2.{chrom}
+        singularity exec --bind $PWD:/mnt pyrho.sif pyrho compute_r2 --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --samplesize $n --quantiles 0.025,0.25,0.5,0.75,0.975 --compute_mean > {wdirpop}/pyrho/{dataset}.r2.{chrom}
         """
 
 
@@ -383,7 +383,7 @@ rule LDpop:
         coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.simg python3 /ldpop/run/ldtable.py -n $n -th .001 -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
+        singularity exec --bind $PWD:/mnt pyrho.sif python3 /ldpop/run/ldtable.py -n $n -th .001 -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
         """
 
 rule convert:
@@ -427,7 +427,7 @@ rule interval:
         iter={config[interval.iter]}
         samp={config[interval.samp]}
         bpen={config[interval.bpen]}
-        singularity exec --bind $PWD:/mnt ldhat.simg /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp
         mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt
         mv ~/bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt
         mv ~/rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt
@@ -456,7 +456,7 @@ rule stat:
     shell:
         """
         burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/mnt ldhat.simg /LDhat/stat -input {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs  -prefix {wdirpop}/ldhat/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs  -prefix {wdirpop}/ldhat/{dataset}.{chrom}
         """
 
 
@@ -474,7 +474,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.simg /LDhot/ldhot --seq {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk {wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res {input} --nsim 100 --out {wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk {wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res {input} --nsim 100 --out {wdirpop}/ldhot/{dataset}.{chrom}
         # Summarize the results
-        singularity exec --bind $PWD:/mnt ldhat.simg /LDhot/ldhot_summary --res {input} --hot {wdirpop}/{dataset}.{chrom}.hotspots.txt --out {wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res {input} --hot {wdirpop}/{dataset}.{chrom}.hotspots.txt --out {wdirpop}/ldhot/{dataset}.{chrom}
         """

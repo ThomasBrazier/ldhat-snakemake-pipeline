@@ -58,12 +58,12 @@ rule trimming_vcf:
             vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --keep {wdir}/samplelist --maf config[maf] --max-missing config[maxmissing]
             mv {wdir}/out.recode.vcf {wdir}/trimmed.vcf
             bgzip -f {wdir}/trimmed.vcf
-            rm {wdir}/out.log
+            #rm {wdir}/out.log
         else
             vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --maf config[maf] --max-missing config[maxmissing]
             mv {wdir}/out.recode.vcf {wdir}/trimmed.vcf
             bgzip {wdir}/trimmed.vcf
-            rm {wdir}/out.log
+            #rm {wdir}/out.log
         fi
         # Collapse duplicate SNPs with identical positions
         bcftools norm -d all {wdir}/trimmed.vcf.gz -o {wdir}/trimmed.vcf
@@ -120,10 +120,10 @@ rule faststructure:
 	"{wdir}/logs/faststructure.{k}.log"
     shell:
         """
-        singularity exec --bind {wdir}:/faststructure/data faststructure.simg python /faststructure/structure.py -K {wildcards.k} --input=/faststructure/data/vcf2structure --output=/faststructure/data/structure/faststructure --full --seed=100
+        singularity exec --bind {wdir}:/faststructure/data faststructure.sif python /faststructure/structure.py -K {wildcards.k} --input=/faststructure/data/vcf2structure --output=/faststructure/data/structure/faststructure --full --seed=100
         #for k in $(seq 1 {maxk})
         #do
-        #    singularity exec --bind $PWD:/mnt faststructure.simg python /faststructure/structure.py -K $k --input=/mnt/{wdir}/{dataset} --output=/mnt/{wdir}/structure/faststructure --full --seed=42
+        #    singularity exec --bind $PWD:/mnt faststructure.sif python /faststructure/structure.py -K $k --input=/mnt/{wdir}/{dataset} --output=/mnt/{wdir}/structure/faststructure --full --seed=42
         #done
         """
 
@@ -146,7 +146,7 @@ rule distruct:
         """
         for k in {{1..{maxk}}}
         do
-            singularity exec --bind {wdir}:/faststructure/data faststructure.simg python /faststructure/distruct.py -K $k --input=/faststructure/data/structure/faststructure --output=/faststructure/data/structure/distruct.$k.svg
+            singularity exec --bind {wdir}:/faststructure/data faststructure.sif python /faststructure/distruct.py -K $k --input=/faststructure/data/structure/faststructure --output=/faststructure/data/structure/distruct.$k.svg
         done
         """
 
@@ -163,7 +163,7 @@ rule choose_k:
         "{wdir}/logs/chooseK"
     shell:
         """
-        echo $(singularity exec --bind {wdir}:/faststructure/data faststructure.simg python /faststructure/chooseK.py --input=/faststructure/data/structure/faststructure) > {wdir}/structure/chooseK
+        echo $(singularity exec --bind {wdir}:/faststructure/data faststructure.sif python /faststructure/chooseK.py --input=/faststructure/data/structure/faststructure) > {wdir}/structure/chooseK
         """
 
 
