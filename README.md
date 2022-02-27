@@ -7,7 +7,7 @@
 Strict dependencies have to be installed before first run:
 - conda
 - snakemake
-- singularity
+- singularity (> 3.0)
 
 To install, just clone the github directory.
 
@@ -18,10 +18,10 @@ git clone
 Singularity images are required. Run in the directory:
 
 ```
-singularity pull docker://tombrazier/faststructure
-singularity pull docker://terhorst/smcp
-singularity pull docker://tombrazier/pyrho
-singularity pull docker://tombrazier/ldhat
+singularity pull faststructure.sif docker://tombrazier/faststructure
+singularity pull smcpp.sif docker://terhorst/smcpp
+singularity pull pyrho.sif docker://tombrazier/pyrho
+singularity pull ldhat.sif docker://tombrazier/ldhat
 ```
 
 To install conda environments at first run, use
