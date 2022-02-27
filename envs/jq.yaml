@@ -1,0 +1,5 @@
+name: jq
+channels:
+  - conda-forge
+dependencies:
+  - jq

@@ -47,7 +47,7 @@ TO run the first step of the pipeline, invoke the 'data_preprocessing.snake' fil
 
 ```
 ncores=8
-snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores --dataset <dataset>
+snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores -j $ncores --config dataset=<dataset>
 ```
 
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
