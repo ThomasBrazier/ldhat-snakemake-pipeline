@@ -10,7 +10,12 @@ missing: 0.1
 maxmissing: 0.9
 subset: 40
 # data_preprocessing
-maxk: 4
+maxk: 7
+#k_structure:
+#  - 1
+#  - 2
+#  - 3
+#  - 4
 # recombination map processing
 K: 3
 pop: 2
