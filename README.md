@@ -47,7 +47,7 @@ TO run the first step of the pipeline, invoke the 'data_preprocessing.snake' fil
 
 ```
 ncores=8
-snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores --dataset <dataset>
+snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores --config dataset=<dataset> -j $ncores
 ```
 
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
@@ -55,7 +55,7 @@ By default, working directory is `data/`. To run in a different directory, chang
 Once population structure is inferred, run the main pipeline after specifying the chosen number of genetic clusters to consider (K) and the population to sample in your config.yaml.
 
 ```
-snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --dataset <dataset> --K <K> --pop <pop> --chrom <chromosome>
+snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
 
 ### Files
