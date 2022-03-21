@@ -6,7 +6,6 @@ Pipeline to estimate fine-scale recombination maps from polymorphism data
 Configuration of the analysis
 i.e. dataset, name of chromosome, population to sample
 """
-configfile: "config.yaml"
 
 """In addition to the configfile statement, config values can be overwritten via the command line"""
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
