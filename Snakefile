@@ -388,8 +388,7 @@ rule haploid:
         "envs/vcftools.yaml"
     shell:
         """
-        zcat {input}  | sed -E 's/\|[0-9]{1}//g' > {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
-        #sed -r -i "/^#CHROM/s/\S+//g$indiv" {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
+        zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | sed -E 's/\|[0-9]{{1}}//g' > {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
         bgzip {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
         tabix -p vcf {output} --csi
         """
