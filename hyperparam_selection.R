@@ -5,13 +5,14 @@
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=2) {
-  stop("<dataset> and <chromosome> must be arguments.", call.=FALSE)
+if (length(args)!=3) {
+  stop("<dataset>, <chromosome> and <path directory> must be arguments.", call.=FALSE)
 }
 
 dataset=args[1]
 chrom=args[2]
-wd=paste("data/", dataset, sep = "")
+wd=args[3]
+#wd=paste("data/", dataset, sep = "")
 
 df = read.table(paste(wd, "/pyrho/", dataset, ".hyperparam.", chrom, sep = ""), header = T)
 
