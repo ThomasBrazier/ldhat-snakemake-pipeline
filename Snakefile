@@ -6,7 +6,6 @@ Pipeline to estimate fine-scale recombination maps from polymorphism data
 Configuration of the analysis
 i.e. dataset, name of chromosome, population to sample
 """
-configfile: "config.yaml"
 
 """In addition to the configfile statement, config values can be overwritten via the command line"""
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
@@ -32,7 +31,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/{dataset}.{chrom}.hotspots.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom),
+        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.hotspots.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom),
     shell:
         "echo 'Finished'"
 
@@ -71,38 +70,10 @@ rule sampling_pop:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdir}/{dataset}.trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf config[maf] --max-missing config[maxmissing]
+        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf config[maf] --max-missing config[maxmissing]
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
-        rm {wdirpop}/out.log
         """
-
-
-# TODO Problem: vcf must be diploid in pyrho
-# "ploidy set to 1 if using phased data and 2 for unphased genotype data"
-# https://knausb.github.io/vcfR_documentation/dip_to_hap.html
-# rule haploid:
-#     """
-#     Haploidization of diploid vcfs
-#     to account for high selfing rates and homozygosity
-#     Make pseudo-diploids for compatibility with pyrho
-#     """
-#     input:
-#         "{wdir}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
-#     output:
-#         "{wdir}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
-#     log:
-#         "{wdir}/logs/{dataset}.chromosome.{chrom}.haploid.log"
-#     conda:
-#         "envs/vcftools.yaml"
-#     shell:
-#         """
-#         # Create vcf containing pseudo-diploid individual
-#         zcat {input} | sed 's/|[0-2]//g' > {wdir}/{dataset}.chromosome.{chrom}.haploid.vcf
-#         bgzip {wdir}/{dataset}.chromosome.{chrom}.haploid.vcf
-#         tabix -p vcf {output} --csi
-#         """
-
 
 
 rule effective_size:
@@ -188,7 +159,6 @@ rule split_chromosome:
         vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --maf config[maf] --max-missing config[maxmissing]
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
-        rm {wdirpop}/out.log
         """
 
 rule phasing_vcf:
@@ -210,7 +180,7 @@ rule phasing_vcf:
         shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window 1 --thread {config[cores]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length
-        zcat {wdirpop}/{dataset}.vcf.gz | grep '^#' > {wdirpop}/newheader
+        zcat {wdir}/{dataset}.vcf.gz | grep '^#' > {wdirpop}/newheader
         cat {wdirpop}/newheader | grep -v '^#CHROM' > {wdirpop}/newheader2
         cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep '^#CHROM' > {wdirpop}/colnames
         cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep -v '^#' > {wdirpop}/newvcf
@@ -220,142 +190,207 @@ rule phasing_vcf:
         """
 
 
+
+# # TODO Problem: vcf must be diploid in pyrho
+# # "ploidy set to 1 if using phased data and 2 for unphased genotype data"
+# # https://knausb.github.io/vcfR_documentation/dip_to_hap.html
+# rule pseudodiploid:
+#     """
+#     Pseudo-diploidization
+#     to account for high selfing rates and homozygosity
+#     Make pseudo-diploids for compatibility with pyrho
+#     """
+#     input:
+#         "{wdirpop}/{dataset}.phased.vcf.gz"
+#     output:
+#         "{wdirpop}/{dataset}.haploid.vcf.gz"
+#     log:
+#         "{wdirpop}/logs/{dataset}.haploid.log"
+#     conda:
+#         "envs/vcftools.yaml"
+#     shell:
+#         """
+#         """
+
+
+
+# # TODO A step to reduce sample size to a random subset
+# # Memory issues when sample size is high
+# rule subset_pyrho:
+#     """
+#     Subset a random sample of individuals
+#     """
+#     input:
+#         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
+#     output:
+#         "{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz"
+#     log:
+#         "{wdirpop}/logs/{dataset}.make_subset_pyrho.{chrom}.log"
+#     conda:
+#         "envs/vcftools.yaml"
+#     shell:
+#         """
+#         shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subsetpyrho
+#         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subsetpyrho --maf config[maf] --max-missing config[maxmissing]
+#         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf
+#         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf
+#         """
+
+
+# rule make_table:
+#     """
+#     Generate demography-aware look up tables
+#     """
+#     input:
+#         "{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz"
+#     output:
+#         "{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf"
+#     log:
+#         "{wdirpop}/logs/{dataset}.make_table.{chrom}.log"
+#     conda:
+#         "envs/jq.yaml"
+#     shell:
+#         """
+#         # Extract the coalescent sizes and times from the model of SMC++
+#         N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.model.final.json)
+#         coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+#         coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
+#         coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
+#         coal_sizes=${{coal_sizes%?}}
+#         coal_sizes="$N0","$coal_sizes"
+#         coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+#         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+#         n=$((2*$n))
+#         N=$((2*$n))
+#         singularity exec --bind $PWD:/mnt pyrho.sif pyrho make_table --samplesize $n --approx --moran_pop_size $N --numthreads {config[cores]} --mu {config[mu]} --outfile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf  --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv
+#         """
+
+
+# rule hyperparam:
+#     """
+#     Search the best hyperparameters for the dataset
+#     <ploidy> should be set to 1 if using phased data and 2 for unphased genotype data. Ploidies other than 1 or 2 are not currently supported
+#     Select the best pair of parameters
+#     Select windowsize with the best LogL2
+#     then best bpen, if there is differences between LogL2
+#     Otherwise take bpen=50
+#     """
+#     input:
+#         "{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf"
+#     output:
+#         "{wdirpop}/pyrho/{dataset}.hyperparam.{chrom}"
+#     log:
+#         "{wdirpop}/logs/{dataset}.hyperparam.{chrom}"
+#     shell:
+#         """
+#         #N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.model.final.json)
+#         #coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+#         #coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
+#         #coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
+#         #coal_sizes=${{coal_sizes%?}}
+#         #coal_sizes="$N0","$coal_sizes"
+#         #coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+#         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+#         n=$((2*$n))
+#         singularity exec --bind $PWD:/mnt pyrho.sif pyrho hyperparam --samplesize $n --blockpenalty {config[bpen]} --windowsize {config[windowsize]} --num_sims {config[num_sims]} --numthreads {config[cores]} --tablefile /mnt/{input} --mu {config[mu]} --ploidy {config[ploidy]} --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv --outfile /mnt/{output} --logfile /mnt/{wdirpop}/pyrho/hyperparam.{chrom}.log
+#         """
+
+
+# rule selectparam:
+#     """
+#     Select the best hyperparameters
+#     """
+#     input:
+#         "{wdirpop}/pyrho/{dataset}.hyperparam.{chrom}"
+#     output:
+#         "{wdirpop}/pyrho/{dataset}.windowsize.{chrom}",
+#         "{wdirpop}/pyrho/{dataset}.bpen.{chrom}"
+#     log:
+#         "{wdirpop}/logs/{dataset}.selectparam.{chrom}"
+#     conda:
+#         "envs/Renv.yaml"
+#     shell:
+#         """
+#         Rscript hyperparam_selection.R {dataset} {chrom} {wdirpop}
+#         """
+
+# rule optimize:
+#     """
+#     Estimate fine-scale recombination rates with Pyrho
+#     """
+#     input:
+#         "{wdirpop}/pyrho/{dataset}.windowsize.{chrom}",
+#         "{wdirpop}/pyrho/{dataset}.bpen.{chrom}"
+#     output:
+#         "{wdirpop}/pyrho/{dataset}.optimize.{chrom}"
+#     log:
+#         "{wdirpop}/logs/{dataset}.optimize.{chrom}"
+#     shell:
+#         """
+#         windowsize=$(cat {wdirpop}/pyrho/{dataset}.windowsize.{chrom})
+#         bpen=$(cat {wdirpop}/pyrho/{dataset}.bpen.{chrom})
+#         windowsize=50
+#         bpen=50
+#         singularity exec --bind $PWD:/mnt pyrho.sif pyrho optimize --vcffile /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz --windowsize $windowsize --blockpenalty $bpen --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --ploidy {config[ploidy]} --outfile /mnt/{output} --numthreads {config[cores]}
+#         """
+
+
+# rule compute_r2:
+#     """
+#     Compute the population-scaled recombination rate as infered by Pyrho
+#     """
+#     input:
+#         "{wdirpop}/pyrho/{dataset}.optimize.{chrom}"
+#     output:
+#         "{wdirpop}/pyrho/{dataset}.r2.{chrom}"
+#     log:
+#         "{wdirpop}/logs/{dataset}.r2.{chrom}"
+#     shell:
+#         """
+#         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+#         singularity exec --bind $PWD:/mnt pyrho.sif pyrho compute_r2 --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --samplesize $n --quantiles 0.025,0.25,0.5,0.75,0.975 --compute_mean > {wdirpop}/pyrho/{dataset}.r2.{chrom}
+#         """
+
+
 # TODO A step to reduce sample size to a random subset
 # Memory issues when sample size is high
-rule subset_pyrho:
+rule subset_ldhat:
     """
     Subset a random sample of individuals
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     output:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     log:
-        "{wdirpop}/logs/{dataset}.make_subset_pyrho.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.make_subset_ldhat.{chrom}.log"
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subsetpyrho
-        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subsetpyrho --maf config[maf] --max-missing config[maxmissing]
-        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf
-        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf
-        rm {wdirpop}/out.log
+        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subset_ldhat
+        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subset_ldhat --maf config[maf] --max-missing config[maxmissing]
+        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
+        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
-
-rule make_table:
+rule haploid:
     """
-    Generate demography-aware look up tables
+    Make haploids to take into account homozygotes in high-selfing rates species
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
-        "{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
     log:
-        "{wdirpop}/{dataset}.make_table.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.haploid.log"
     conda:
-        "envs/jq.yaml"
+        "envs/vcftools.yaml"
     shell:
         """
-        # Extract the coalescent sizes and times from the model of SMC++
-        N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.model.final.json)
-        coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
-        coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
-        coal_sizes=${{coal_sizes%?}}
-        coal_sizes="$N0","$coal_sizes"
-        coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-        n=$((2*$n))
-        N=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.sif pyrho make_table --samplesize $n --approx --moran_pop_size $N --numthreads {config[cores]} --mu {config[mu]} --outfile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf  --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv
-        """
-
-
-rule hyperparam:
-    """
-    Search the best hyperparameters for the dataset
-    <ploidy> should be set to 1 if using phased data and 2 for unphased genotype data. Ploidies other than 1 or 2 are not currently supported
-    Select the best pair of parameters
-    Select windowsize with the best LogL2
-    then best bpen, if there is differences between LogL2
-    Otherwise take bpen=50
-    """
-    input:
-        "{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf"
-    output:
-        "{wdirpop}/pyrho/{dataset}.hyperparam.{chrom}"
-    log:
-        "{wdirpop}/logs/{dataset}.hyperparam.{chrom}"
-    shell:
-        """
-        #N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.model.final.json)
-        #coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        #coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
-        #coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
-        #coal_sizes=${{coal_sizes%?}}
-        #coal_sizes="$N0","$coal_sizes"
-        #coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-        n=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.sif pyrho hyperparam --samplesize $n --blockpenalty {config[bpen]} --windowsize {config[windowsize]} --num_sims {config[num_sims]} --numthreads {config[cores]} --tablefile /mnt/{input} --mu {config[mu]} --ploidy {config[ploidy]} --smcpp_file /mnt/{wdirpop}/smc/plot_chromosome.csv --outfile /mnt/{output} --logfile /mnt/{wdirpop}/pyrho/hyperparam.{chrom}.log
-        """
-
-
-rule selectparam:
-    """
-    Select the best hyperparameters
-    """
-    input:
-        "{wdirpop}/pyrho/{dataset}.hyperparam.{chrom}"
-    output:
-        "{wdirpop}/pyrho/{dataset}.windowsize.{chrom}",
-        "{wdirpop}/pyrho/{dataset}.bpen.{chrom}"
-    log:
-        "{wdirpop}/logs/{dataset}.selectparam.{chrom}"
-    conda:
-        "envs/Renv.yaml"
-    shell:
-        """
-        Rscript hyperparam_selection.R {dataset} {chrom}
-        """
-
-rule optimize:
-    """
-    Estimate fine-scale recombination rates with Pyrho
-    """
-    input:
-        "{wdirpop}/pyrho/{dataset}.windowsize.{chrom}",
-        "{wdirpop}/pyrho/{dataset}.bpen.{chrom}"
-    output:
-        "{wdirpop}/pyrho/{dataset}.optimize.{chrom}"
-    log:
-        "{wdirpop}/logs/{dataset}.optimize.{chrom}"
-    shell:
-        """
-        windowsize=$(cat {wdirpop}/pyrho/{dataset}.windowsize.{chrom})
-        bpen=$(cat {wdirpop}/pyrho/{dataset}.bpen.{chrom})
-        windowsize=50
-        bpen=50
-        singularity exec --bind $PWD:/mnt pyrho.sif pyrho optimize --vcffile /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz --windowsize $windowsize --blockpenalty $bpen --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --ploidy {config[ploidy]} --outfile /mnt/{output} --numthreads {config[cores]}
-        """
-
-
-rule compute_r2:
-    """
-    Compute the population-scaled recombination rate as infered by Pyrho
-    """
-    input:
-        "{wdirpop}/pyrho/{dataset}.optimize.{chrom}"
-    output:
-        "{wdirpop}/pyrho/{dataset}.r2.{chrom}"
-    log:
-        "{wdirpop}/logs/{dataset}.r2.{chrom}"
-    shell:
-        """
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-        singularity exec --bind $PWD:/mnt pyrho.sif pyrho compute_r2 --tablefile /mnt/{wdirpop}/pyrho/{dataset}.lookuptable.{chrom}.hdf --samplesize $n --quantiles 0.025,0.25,0.5,0.75,0.975 --compute_mean > {wdirpop}/pyrho/{dataset}.r2.{chrom}
+        zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | sed -E 's/\|[0-9]{{1}}//g' > {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
+        bgzip {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
+        tabix -p vcf {output} --csi
         """
 
 
@@ -365,7 +400,7 @@ rule LDpop:
     Generate a demography-aware look-up table
     """
     input:
-        "{wdirpop}/pyrho/{dataset}.r2.{chrom}"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
     output:
         "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}"
     log:
@@ -381,9 +416,9 @@ rule LDpop:
         coal_sizes=${{coal_sizes%?}}
         coal_sizes="$N0","$coal_sizes"
         coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
-        singularity exec --bind $PWD:/mnt pyrho.sif python3 /ldpop/run/ldtable.py -n $n -th .001 -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
+        singularity exec --bind $PWD:/mnt pyrho.sif python3 /ldpop/run/ldtable.py -n $n -th {config[theta]} -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
         """
 
 rule convert:
@@ -396,17 +431,17 @@ rule convert:
     """
     input:
         ldpop = "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}",
-        vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.pyrho.vcf.gz"
+        vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
     log:
-        "{wdirpop}/{dataset}.ldhatconvert.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.log"
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pyhro.vcf.gz --chr {chrom} --ldhat-geno --out {wdirpop}/ldhat/{dataset}.{chrom}
+        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz --chr {chrom} --ldhat-geno --out {wdirpop}/ldhat/{dataset}.{chrom}
         """
 
 rule interval:
@@ -417,20 +452,20 @@ rule interval:
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
     output:
-        "{wdirpop}/{dataset}.{chrom}.new_lk.txt",
-        "{wdirpop}/{dataset}.{chrom}.bounds.txt",
-        "{wdirpop}/{dataset}.{chrom}.rates.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.rates.txt"
     log:
-        "{wdirpop}/{dataset}.ldhatinterval.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.log"
     shell:
         """
         iter={config[interval.iter]}
         samp={config[interval.samp]}
         bpen={config[interval.bpen]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp
-        mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt
-        mv ~/bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt
-        mv ~/rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.
+	#cp ~/new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt
+	#cp ~/bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt
+	#cp ~/rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt
         """
 
 
@@ -446,17 +481,17 @@ rule stat:
     Compute statistics on interval
     """
     input:
-        "{wdirpop}/{dataset}.{chrom}.new_lk.txt",
-        "{wdirpop}/{dataset}.{chrom}.bounds.txt",
-        "{wdirpop}/{dataset}.{chrom}.rates.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.rates.txt"
     output:
-        "{wdirpop}/{dataset}.{chrom}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.res.txt"
     log:
-        "{wdirpop}/{dataset}.ldhatstat.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.log"
     shell:
         """
         burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs  -prefix {wdirpop}/ldhat/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.
         """
 
 
@@ -466,15 +501,15 @@ rule LDhot:
     LDhot
     """
     input:
-        "{wdirpop}/{dataset}.{chrom}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.res.txt"
     output:
-        "{wdirpop}/{dataset}.{chrom}.hotspots.txt"
+        "{wdirpop}/ldhot/{dataset}.{chrom}.hotspots.txt"
     log:
         "{wdirpop}/logs/{dataset}.{chrom}.ldhot.log"
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc {wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk {wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res {input} --nsim 100 --out {wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res {input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
         # Summarize the results
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res {input} --hot {wdirpop}/{dataset}.{chrom}.hotspots.txt --out {wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res {input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
         """
