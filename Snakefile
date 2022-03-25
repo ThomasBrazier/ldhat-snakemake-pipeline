@@ -463,9 +463,9 @@ rule interval:
         samp={config[interval.samp]}
         bpen={config[interval.bpen]}
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp
-        mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt
-        mv ~/bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt
-        mv ~/rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt
+	cp ~/new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}.new_lk.txt
+	cp ~/bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}.bounds.txt
+	cp ~/rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.rates.txt
         """
 
 
@@ -491,7 +491,7 @@ rule stat:
     shell:
         """
         burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs  -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs  -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.
         """
 
 
