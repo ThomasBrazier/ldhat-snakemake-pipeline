@@ -24,13 +24,14 @@ GT = genotypes[,1]
 genotypes = genotypes[,-1]
 cat("Random resampling of haplotypes.\n")
 # Matrix of first haplotype - phased data
-matpos1 = apply(genotypes, c(1,2), function(x){strsplit(x, "|")[[1]][1]})
+sep = "|"
+matpos1 = apply(genotypes, c(1,2), function(x){strsplit(x, sep)[[1]][1]})
 # Matrix of second haplotype - phased data
-matpos2 = apply(genotypes, c(1,2), function(x){strsplit(x, "|")[[1]][2]})
+matpos2 = apply(genotypes, c(1,2), function(x){strsplit(x, sep)[[1]][2]})
 # Make pseudodiploids by randomly pairing haplotypes
 set.seed(42)
 new_genotypes = paste(matpos1[sample(seq(1, nrow(matpos1)), replace = FALSE),],
-                      matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = "|")
+                      matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = sep)
 new_genotypes = matrix(new_genotypes, nrow = nrow(genotypes), ncol = ncol(genotypes),
                        dimnames = list(seq(1, nrow(genotypes)), colnames(genotypes)))
 new_genotypes = cbind(GT, new_genotypes)
@@ -40,6 +41,6 @@ vcf@gt = new_genotypes
 
 cat("Write new vcf file.\n")
 # Write a new pseudodiploid vcf
-out_file = paste(vcf_prefix, ".pseudodiploid.vcf", sep = "")
+out_file = paste(vcf_prefix, ".pseudodiploid.vcf.gz", sep = "")
 write.vcf(vcf, out_file)
 
