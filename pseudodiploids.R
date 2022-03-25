@@ -15,12 +15,14 @@ require(vcfR)
 vcf_file = list.files(path = wdirpop, pattern = paste(chromosome, ".phased.vcf.gz$", sep = ""), full.names = TRUE)
 vcf_prefix = gsub(".phased.vcf.gz", "", vcf_file)
 
+cat("Loading vcf file.\n")
 vcf = read.vcfR(vcf_file, verbose = FALSE, convertNA = FALSE)
 
 genotypes = as.matrix(vcf@gt)
 # Extract haplotypes in a matrix
 GT = genotypes[,1]
 genotypes = genotypes[,-1]
+cat("Random resampling of haplotypes.\n")
 # Matrix of first haplotype - phased data
 matpos1 = apply(genotypes, c(1,2), function(x){strsplit(x, "|")[[1]][1]})
 # Matrix of second haplotype - phased data
@@ -36,6 +38,7 @@ colnames(new_genotypes)[1] = "FORMAT"
 
 vcf@gt = new_genotypes
 
+cat("Write new vcf file.\n")
 # Write a new pseudodiploid vcf
 out_file = paste(vcf_prefix, ".pseudodiploid.vcf", sep = "")
 write.vcf(vcf, out_file)
