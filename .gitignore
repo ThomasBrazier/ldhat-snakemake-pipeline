@@ -1,4 +1,5 @@
 cluster.yaml # Must stay private
+.Rhistory
 .DS_Store
 data/
 *.simg
