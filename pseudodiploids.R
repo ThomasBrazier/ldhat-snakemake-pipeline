@@ -2,7 +2,7 @@
 args = commandArgs(trailingOnly=TRUE)
 # <wdirpop> must be passed in argument
 
-# test if there is at least one argument: if not, return an error
+# test if there are two arguments: if not, return an error
 if (length(args) != 2) {
  stop("<wdirpop> and <chromosome> must be passed in argument", call.=FALSE)
 }
