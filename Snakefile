@@ -352,6 +352,27 @@ rule phasing_vcf:
 #         """
 
 
+rule pseudodiploid:
+    """
+    Make pseudodiploids (phased haplotypes) to take into account homozygotes in high-selfing rates species
+    """
+    input:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
+    output:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
+    log:
+        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.pseudodiploid.log"
+    conda:
+        "envs/Renv.yaml"
+    shell:
+        """
+        Rscript pseudodiploids.R {wdirpop} {chrom}
+        gunzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz
+	bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
+        tabix -p vcf {output} --csi
+        """
+
+
 # TODO A step to reduce sample size to a random subset
 # Memory issues when sample size is high
 rule subset_ldhat:
@@ -359,7 +380,7 @@ rule subset_ldhat:
     Subset a random sample of individuals
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     log:
@@ -369,30 +390,10 @@ rule subset_ldhat:
     shell:
         """
         shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subset_ldhat
-        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subset_ldhat --maf config[maf] --max-missing config[maxmissing]
+        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subset_ldhat --maf config[maf] --max-missing config[maxmissing]
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
-
-rule haploid:
-    """
-    Make haploids to take into account homozygotes in high-selfing rates species
-    """
-    input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
-    output:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
-    log:
-        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.haploid.log"
-    conda:
-        "envs/vcftools.yaml"
-    shell:
-        """
-        zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | sed -E 's/\|[0-9]{{1}}//g' > {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
-        bgzip {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf
-        tabix -p vcf {output} --csi
-        """
-
 
 # Use LDHat/LDhot to estimate fine scale recombination rate and detect hotspots
 rule LDpop:
@@ -400,7 +401,7 @@ rule LDpop:
     Generate a demography-aware look-up table
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
         "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}"
     log:
@@ -416,8 +417,9 @@ rule LDpop:
         coal_sizes=${{coal_sizes%?}}
         coal_sizes="$N0","$coal_sizes"
         coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
+	echo $n
         singularity exec --bind $PWD:/mnt pyrho.sif python3 /ldpop/run/ldtable.py -n $n -th {config[theta]} -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
         """
 
@@ -431,7 +433,7 @@ rule convert:
     """
     input:
         ldpop = "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}",
-        vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz"
+        vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
@@ -441,7 +443,7 @@ rule convert:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.haploid.vcf.gz --chr {chrom} --ldhat-geno --out {wdirpop}/ldhat/{dataset}.{chrom}
+        vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}
         """
 
 rule interval:
@@ -509,7 +511,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res {input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
         # Summarize the results
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res {input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}
         """
