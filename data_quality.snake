@@ -19,8 +19,7 @@ rule all:
     One ring to rule them all
     """
     input:
-        expand("{wdir}/{dataset}.quality.Rmd", wdir=wdir, dataset=dataset),
-        expand("{wdir}/{dataset}.quality.pdf", wdir=wdir, dataset=dataset)
+        expand("{wdir}/{dataset}.quality.html", wdir=wdir, dataset=dataset)
     shell:
         "echo 'Data quality assessment: finished'"
 
@@ -28,4 +27,17 @@ rule Rmd_report:
     """
     Produce a Rmarkdown/pdf report with vcfR - common summary statistics
     """
+    input:
+        "{wdir}/{dataset}.vcf.gz"
+    output:
+        "{wdir}/{dataset}.quality.html"
+    log:
+        "{wdir}/logs/{dataset}.quality.log"
+    conda:
+        "envs/Renv.yaml"
+    shell:
+        """
+	Rscript vcf_qualityreport.R {dataset}
+	mv vcf_qualityreport.html {wdir}/{dataset}.quality.html
+        """
 
