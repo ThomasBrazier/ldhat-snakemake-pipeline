@@ -2,6 +2,7 @@
 #SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
 #SBATCH --mail-type=all
 #SBATCH --time=12-60:00:00
+#SBATCH --job-name=preprocessing
 ## the only expected argument is <dataset>
 
 ## load the necessary environement (used for Genouest cluster)
