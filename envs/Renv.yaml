@@ -1,6 +1,7 @@
 name: Renv
 channels:
   - conda-forge
+  - bioconda
 dependencies:
   - r-base
   - r-rmarkdown
@@ -8,3 +9,8 @@ dependencies:
   - r-adegenet
   - r-vcfr
   - r-poppr
+  - vcftools
+  - htslib
+  - samtools=1.9
+  - bcftools
+  - plink>=1.9
