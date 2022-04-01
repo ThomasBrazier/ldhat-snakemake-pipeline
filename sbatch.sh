@@ -10,4 +10,9 @@
 . /local/env/envsingularity-3.8.5.sh
 . /local/env/envconda.sh
 
-snakemake -s Snakefile -p -j 16 --config dataset=${1} --configfile data/${1}/config.yaml --cluster-config cluster.yaml --cluster "sbatch --account={cluster.account} --nodes={cluster.node} --ntasks={cluster.n} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} --job-name=${1}" --use-conda --use-singularity --nolock --rerun-incomplete -F
+snakemake -s Snakefile -p -j 16 --config dataset=${1} bpen=5 --configfile data/${1}/config.yaml --cluster-config cluster.yaml --cluster "sbatch --account={cluster.account} --nodes={cluster.node} --ntasks={cluster.n} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} --job-name=${1}" --use-conda --use-singularity --nolock --rerun-incomplete -F
+
+snakemake -s Snakefile -p -j 16 --config dataset=${1} bpen=15 --configfile data/${1}/config.yaml --cluster-config cluster.yaml --cluster "sbatch --account={cluster.account} --nodes={cluster.node} --ntasks={cluster.n} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} --job-name=${1}" --use-conda --use-singularity --nolock --rerun-incomplete -F
+
+snakemake -s Snakefile -p -j 16 --config dataset=${1} bpen=25 --configfile data/${1}/config.yaml --cluster-config cluster.yaml --cluster "sbatch --account={cluster.account} --nodes={cluster.node} --ntasks={cluster.n} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} --job-name=${1}" --use-conda --use-singularity --nolock --rerun-incomplete -F
+
