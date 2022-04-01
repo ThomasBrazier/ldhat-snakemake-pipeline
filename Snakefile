@@ -367,9 +367,26 @@ rule pseudodiploid:
     shell:
         """
         Rscript pseudodiploids.R {wdirpop} {chrom}
+        """
+
+
+rule gzpseudodiploid:
+    """
+    Make pseudodiploids (phased haplotypes) to take into account homozygotes in high-selfing rates species
+    """
+    input:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
+    output:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz.csi"
+    log:
+        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.gzpseudodiploid.log"
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
         gunzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz
 	bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
-        tabix -p vcf {output} --csi
+        tabix -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --csi
         """
 
 
@@ -380,7 +397,7 @@ rule subset_ldhat:
     Subset a random sample of individuals
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz.csi"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     log:
