@@ -58,6 +58,8 @@ Once population structure is inferred, run the main pipeline after specifying th
 snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
 
+
+
 ### Files
 
 * dataset.vcf.gz, a tabix vcf file, bgzipped
