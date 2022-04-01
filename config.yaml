@@ -26,8 +26,8 @@ ploidy: 1
 num_sims: 50
 windowsize: 25,50,100,500
 bpen: 50,100,500
-interval.bpen: 5
+interval.bpen: 25
 interval.samp: 5000
-interval.iter: 6000000
-ldhat.burn: 5
+interval.iter: 10000000
+ldhat.burn: 10000
 ldhot.nsim: 100
