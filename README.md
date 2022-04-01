@@ -27,8 +27,8 @@ singularity pull ldhat.sif docker://tombrazier/ldhat
 To install conda environments at first run, use
 
 ```
-snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores 1
-snakemake --use-conda --use-singularity
+snakemake -s data_preprocessing.snake --use-conda --conda-create-envs-only
+snakemake --use-conda --conda-create-envs-only
 ```
 
 ## Usage
