@@ -413,7 +413,8 @@ rule subset_ldhat:
         "envs/vcftools.yaml"
     shell:
         """
-        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subset_ldhat
+        zcat {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz | head -n 10000 | grep "#CHROM" | tr "\t" "\n" | tail -n +10 > {wdirpop}/poplist_randomsample
+        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist_randomsample > {wdirpop}/subset_ldhat
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subset_ldhat --maf config[maf] --max-missing config[maxmissing]
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
