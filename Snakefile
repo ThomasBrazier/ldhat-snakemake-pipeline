@@ -369,7 +369,10 @@ rule pseudodiploid:
         "envs/Renv.yaml"
     shell:
         """
-        Rscript pseudodiploids.R {wdirpop} {chrom}
+        if {config[pseudodiploid]} == 1:
+            Rscript pseudodiploids.R {wdirpop} {chrom}
+        else:
+            cp {input} {output}
         """
 
 
@@ -388,7 +391,7 @@ rule gzpseudodiploid:
     shell:
         """
         gunzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz
-	bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
+	    bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
         tabix -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --csi
         """
 
