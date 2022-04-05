@@ -369,7 +369,7 @@ rule pseudodiploid:
         "envs/Renv.yaml"
     shell:
         """
-        if {config[pseudodiploid]} == 1:
+        if {config["pseudodiploid"]} == 1:
             Rscript pseudodiploids.R {wdirpop} {chrom}
         else:
             cp {input} {output}
