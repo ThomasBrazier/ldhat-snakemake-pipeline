@@ -368,7 +368,7 @@ rule pseudodiploid:
         """
         Rscript pseudodiploids.R {wdirpop} {chrom}
         gunzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz
-	bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
+    	bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
         tabix -p vcf {output} --csi
         """
 
