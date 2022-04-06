@@ -4,5 +4,11 @@
 * SMCPP
 ** "smcpp.commands.vcf2smc WARNING Neither missing cutoff (-c) or mask (-m) has been specified. This means that stretches of the chromosome that do not have any VCF entries (for example, centromeres) will be interpreted as homozygous recessive"
 
+
+* Multiprocessing
+** Process more than one chromosome
+** Process more than one interval bpen
+
+
 * Config
-** One config file per dataset, in the data data directory
+** DONE One config file per dataset, in the data data directory
