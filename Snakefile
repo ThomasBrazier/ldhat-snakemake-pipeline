@@ -413,11 +413,13 @@ rule subset_ldhat:
         "envs/vcftools.yaml"
     shell:
         """
-        zcat {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz | head -n 10000 | grep "#CHROM" | tr "\\t" "\\n" | tail -n +10 > {wdirpop}/poplist_randomsample.{chrom}
-        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist_randomsample.{chrom} > {wdirpop}/subset_ldhat.{chrom}
-        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/subset_ldhat.{chrom} --maf config[maf] --max-missing config[maxmissing]
+        #zcat {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz | head -n 10000 | grep "#CHROM" | tr "\\t" "\\n" | tail -n +10 > {wdirpop}/poplistrandomsample.{chrom}
+        #shuf -n {config[subset]} --random-source=<(yes {config[seed]}) -o {wdirpop}/subsetldhat.{chrom} {wdirpop}/poplistrandomsample.{chrom}
+        # Set a random seed
+	RANDOM=42
+	vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
-        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
+	bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
 # Use LDHat/LDhot to estimate fine scale recombination rate and detect hotspots
