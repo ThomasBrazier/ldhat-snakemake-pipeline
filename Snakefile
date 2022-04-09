@@ -159,10 +159,8 @@ rule split_chromosome:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom}
-        vcftools --vcf {wdirpop}/out.recode.vcf --out {wdirpop}/out2 --recode --maf config[maf] --max-missing config[maxmissing]
-        rm {wdirpop}/out.recode.vcf
-        mv {wdirpop}/out2.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
+        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --maf "config[maf]" --max-missing "config[maxmissing]" --min-alleles 2 --max-alleles 2
+        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         """
 
