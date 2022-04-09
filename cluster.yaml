@@ -5,5 +5,5 @@ __default__:
     n: 1
     p: genouest
     cpusPerTask: 8
-    memPerCpu: 10000
+    memPerCpu: 515799
     time: 12-60:00:00
