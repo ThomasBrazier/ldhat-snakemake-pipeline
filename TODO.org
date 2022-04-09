@@ -10,5 +10,8 @@
 ** Process more than one interval bpen
 
 
+* subset LDhat
+** Set seed for vcftools
+
 * Config
 ** DONE One config file per dataset, in the data data directory
