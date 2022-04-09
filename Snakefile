@@ -73,7 +73,7 @@ rule sampling_pop:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf config[maf] --max-missing config[maxmissing]
+        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf config[maf] --max-missing config[maxmissing] --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
         """
@@ -159,8 +159,10 @@ rule split_chromosome:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --maf config[maf] --max-missing config[maxmissing]
-        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
+        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom}
+	vcftools --vcf {wdirpop}/out.recode.vcf --out out2 --recode --maf config[maf] --max-missing config[maxmissing]
+        rm {wdirpop}/out.recode.vcf
+	mv {wdirpop}/out2.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         """
 
@@ -518,10 +520,10 @@ rule stat:
     log:
         "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
     shell:
-        """
-        burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.
-        """
+	"""
+	burn={config[ldhat.burn]}
+	singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.
+	"""
 
 
 rule LDhot:
