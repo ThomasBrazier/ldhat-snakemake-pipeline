@@ -5,9 +5,9 @@ latency-wait: 60
 # Sample
 dataset: "Oryza_sativa_McCouch2016"
 chrom: "1"
-maf: 0.05
+maf: 0.01
 missing: 0.1
-maxmissing: 0.9
+maxmissing: 0.8
 subset: 40
 # data_preprocessing
 maxk: 7
