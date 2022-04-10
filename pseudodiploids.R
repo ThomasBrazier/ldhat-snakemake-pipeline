@@ -12,7 +12,7 @@ chromosome = args[2]
 #chromosome = "1"
 require(vcfR)
 
-vcf_file = list.files(path = wdirpop, pattern = paste(chromosome, ".phased.vcf.gz$", sep = ""), full.names = TRUE)
+vcf_file = list.files(path = wdirpop, pattern = paste(".", chromosome, ".phased.vcf.gz$", sep = ""), full.names = TRUE)
 vcf_prefix = gsub(".phased.vcf.gz", "", vcf_file)
 
 cat("Loading vcf file.\n")
