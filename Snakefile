@@ -12,7 +12,7 @@ dataset=config["dataset"] # Name of your dataset directory and prefix of your vc
 chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' dataset
 K=str(config["K"])
 pop=str(config["pop"])
-bpen=config["interval.bpen"]
+bpen=config["bpen"]
 
 
 wdir=config["workingdir"] + dataset
@@ -490,8 +490,8 @@ rule interval:
         """
         iter={config[interval.iter]}
         samp={config[interval.samp]}
-        bpen={config[interval.bpen]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.
+        bpen={config[bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.
         """
 
 
@@ -517,7 +517,7 @@ rule stat:
     shell:
         """
         burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[interval.bpen]}.
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.
         """
 
 
@@ -535,7 +535,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[interval.bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         # Summarize the results
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[interval.bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[interval.bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         """
