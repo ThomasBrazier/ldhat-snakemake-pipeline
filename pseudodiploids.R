@@ -15,7 +15,7 @@ require(vcfR)
 vcf_file = list.files(path = wdirpop, pattern = paste(".", chromosome, ".phased.vcf.gz$", sep = ""), full.names = TRUE)
 vcf_prefix = gsub(".phased.vcf.gz", "", vcf_file)
 
-cat("Loading vcf file.\n")
+cat("Loading vcf file", vcf_file,".\n")
 vcf = read.vcfR(vcf_file, verbose = FALSE, convertNA = FALSE)
 print(vcf)
 genotypes = as.matrix(vcf@gt)
