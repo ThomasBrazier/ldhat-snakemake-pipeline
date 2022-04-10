@@ -73,7 +73,7 @@ rule sampling_pop:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf config[maf] --max-missing config[maxmissing] --min-alleles 2 --max-alleles 2
+        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
         """
@@ -159,7 +159,7 @@ rule split_chromosome:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing "config[maxmissing]" --min-alleles 2 --max-alleles 2
+        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         """
