@@ -73,7 +73,9 @@ rule sampling_pop:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+        #vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --max-alleles 2
+	# Filter chromosomes and keep only bi-allelic alelles
+	vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
         """
@@ -101,6 +103,30 @@ rule effective_size:
         """
 
 
+# From now, analyses are performed on individual chromosomes
+rule split_chromosome:
+    """
+    Split the entire vcf into one vcf per chromosome
+    Deal with missing data: remove SNPs with missing data for more than 90% of individuals
+    """
+    input:
+        "{wdirpop}/statistics/{dataset}.effective_size"
+    output:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
+    log:
+        "{wdirpop}/logs/{dataset}.split_chromosome.{chrom}.log"
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
+        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
+        tabix -f -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
+	tabix -f --csi -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
+        """
+
+
 # TODO Take care of run of homozygosity (mask): raise WARNING
 # Plink  search for ROH
 # TODO How to treat selfing: https://github.com/popgenmethods/smcpp/issues/82
@@ -118,50 +144,28 @@ rule demography:
     Nat Genet. 2017 Feb;49(2):303–9.
     """
     input:
-        "{wdirpop}/statistics/{dataset}.effective_size"
-    output:
-        "{wdirpop}/smc/{dataset}.model.final.json"
-    log:
-        "{wdirpop}/logs/{dataset}.demography.log"
-    conda:
-        "envs/vcftools.yaml"
-    shell:
-        """
-        tabix -f -p vcf {wdirpop}/{dataset}.pop.vcf.gz --csi
-        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subsetpop
-        individuals=$(cat {wdirpop}/subsetpop | tr '\n' ',' | sed "s/,$//g")
-        chromosomes=$(zcat {wdirpop}/{dataset}.pop.vcf.gz | awk '{{ print $1 }}' | sort | uniq | grep -v '^#')
-        for c in $chromosomes; do
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc --ignore-missing /mnt/{wdirpop}/{dataset}.pop.vcf.gz /mnt/{wdirpop}/smc/vcf2smc.$c $c pop1:$individuals
-        done
-        paths=$(for i in $chromosomes; do echo /mnt/{wdirpop}/smc/vcf2smc.$i; done | tr '\n' ' ')
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smc/ {config[mu]} $paths --cores {config[cores]}
-        mv {wdirpop}/smc/model.final.json {wdirpop}/smc/{dataset}.model.final.json
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.pdf /mnt/{wdirpop}/smc/{dataset}.model.final.json -c
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior /mnt/{wdirpop}/smc/{dataset}.model.final.json /mnt/{wdirpop}/smc/{dataset}.posterior.smc $paths
-        mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
-        """
-
-
-# From now, analyses are performed on individual chromosomes
-rule split_chromosome:
-    """
-    Split the entire vcf into one vcf per chromosome
-    Deal with missing data: remove SNPs with missing data for more than 90% of individuals
-    """
-    input:
-        "{wdirpop}/smc/{dataset}.model.final.json"
-    output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
+    output:
+        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
     log:
-        "{wdirpop}/logs/{dataset}.split_chromosome.{chrom}.log"
+        "{wdirpop}/logs/{dataset}.{chrom}.demography.log"
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
-        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
-        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
+	echo $(cat {wdirpop}/statistics/{dataset}.effective_size)
+        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subsetpop
+	# Select a pair of distinguished lineages
+        dist=$(echo $(shuf -n 2 --random-source=<(yes {config[seed]}) {wdirpop}/poplist))
+	echo $dist
+	individuals=$(cat {wdirpop}/subsetpop | tr '\n' ',' | sed "s/,$//g")
+	echo $individuals
+	singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc --missing-cutoff 50000 --ignore-missing -d $dist /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz /mnt/{wdirpop}/smc/vcf2smc.{chrom} {chrom} pop1:$individuals
+	singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smc/ --nonseg-cutoff 50000 --thinning 400 --regularization-penalty 5 --timepoints 1e1 1e10 {config[mu]} /mnt/{wdirpop}/smc/vcf2smc.{chrom}
+	mv {wdirpop}/smc/model.final.json {wdirpop}/smc/{dataset}.{chrom}.model.final.json
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.{chrom}.pdf /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json -c
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json /mnt/{wdirpop}/smc/{dataset}.{chrom}.posterior.smc /mnt/{wdirpop}/smc/vcf2smc.{chrom}
+        mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
         """
 
 rule phasing_vcf:
@@ -171,7 +175,7 @@ rule phasing_vcf:
     https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html#output
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
+        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     log:
@@ -180,6 +184,7 @@ rule phasing_vcf:
         "envs/shapeit.yaml"
     shell:
         """
+	# Remove --thread {config[cores]} if causing errors 	
         shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window 1 --thread {config[cores]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length

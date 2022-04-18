@@ -43,7 +43,7 @@ Only one population can be sampled in a sample directory. For analysing more tha
 
 The workflow take into consideration the directory where the sample data is stored. Thus working directory must be set in 'config.yaml' when invoking Snakemake.
 
-TO run the first step of the pipeline, invoke the 'data_preprocessing.snake' file to identify population structure in your dataset.
+To run the first step of the pipeline, invoke the 'data_preprocessing.snake' file to identify population structure in your dataset.
 
 ```
 ncores=8
@@ -58,6 +58,9 @@ Once population structure is inferred, run the main pipeline after specifying th
 snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
 
+### Tips
+
+Contig length in the vcf file header are necessary at some point. You should verify this features before running analyses and annotate your vcf if necessary.
 
 
 ### Files
