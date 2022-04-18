@@ -1,5 +1,5 @@
 workingdir: 'data/'
-cores: 16
+cores: 4
 seed: 42
 latency-wait: 60
 # Sample
