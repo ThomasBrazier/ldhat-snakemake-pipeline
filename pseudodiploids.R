@@ -9,10 +9,10 @@ if (length(args) != 2) {
 wdirpop = args[1]
 chromosome = args[2]
 # wdirpop = "data/Oryza_sativa_McCouch2016/K3.pop2"
-#chromosome = "1"
+# chromosome = "1"
 require(vcfR)
 
-vcf_file = list.files(path = wdirpop, pattern = paste("chromosome.[", chromosome, "]{1}.phased.vcf.gz$", sep = ""), full.names = TRUE)
+vcf_file = list.files(path = wdirpop, pattern = paste("chromosome.", chromosome, ".phased.vcf.gz$", sep = ""), full.names = TRUE)
 vcf_prefix = gsub(".phased.vcf.gz", "", vcf_file)
 
 cat("Loading vcf file", vcf_file,".\n")
