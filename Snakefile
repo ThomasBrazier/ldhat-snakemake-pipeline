@@ -164,8 +164,8 @@ rule demography:
 	singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smc/ --nonseg-cutoff 50000 --thinning 400 --regularization-penalty 5 --timepoints 1e1 1e10 {config[mu]} /mnt/{wdirpop}/smc/vcf2smc.{chrom}
 	mv {wdirpop}/smc/model.final.json {wdirpop}/smc/{dataset}.{chrom}.model.final.json
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.{chrom}.pdf /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json -c
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json /mnt/{wdirpop}/smc/{dataset}.{chrom}.posterior.smc /mnt/{wdirpop}/smc/vcf2smc.{chrom}
-        mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior --heatmap /mnt/{wdirpop}/smc/{dataset}.{chrom}.heatmap.png /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json /mnt/{wdirpop}/smc/{dataset}.{chrom}.posterior.smc /mnt/{wdirpop}/smc/vcf2smc.{chrom}
+        #mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
         """
 
 rule phasing_vcf:
@@ -442,13 +442,13 @@ rule LDpop:
         "envs/jq.yaml"
     shell:
         """
-        N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.model.final.json)
-        coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+        N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.{chrom}.model.final.json)
+        coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.{chrom}.model.final.json | tr -d '[:space:][]')
         coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
         coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
         coal_sizes=${{coal_sizes%?}}
         coal_sizes="$N0","$coal_sizes"
-        coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.model.final.json | tr -d '[:space:][]')
+        coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.{chrom}.model.final.json | tr -d '[:space:][]')
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
 	echo $n
