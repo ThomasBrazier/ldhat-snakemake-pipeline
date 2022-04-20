@@ -52,20 +52,25 @@ snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $nco
 
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
 
-Once population structure is inferred, run the main pipeline after specifying the chosen number of genetic clusters to consider (K) and the population to sample in your config.yaml.
+Once population structure is inferred from 'popstatistics.<K>', 'structure/chooseK' and 'structure/distruct.<K>.svg', run the main pipeline after specifying the chosen <K> number of genetic clusters to consider and the <population> to sample in your config.yaml.
 
 ```
 snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
 
-### Tips
+One chromosome is run at a time. You must specify which chromosome to process in the 'config.yaml'.
 
-Contig length in the vcf file header are necessary at some point. You should verify this features before running analyses and annotate your vcf if necessary.
+### SMC++
+
+
+### ShapeIt
+
+Contig length in the vcf file header are necessary at the phasing step. You should verify this features before running analyses and annotate your vcf if necessary.
 
 
 ### Files
 
-* dataset.vcf.gz, a tabix vcf file, bgzipped
+* <dataset>.vcf.gz, a tabix vcf file, bgzipped
 * samplelist, a one column text file with a list of individuals to keep in the original vcf
 
 
