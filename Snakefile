@@ -75,7 +75,7 @@ rule sampling_pop:
         """
         #vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --max-alleles 2
 	# Filter chromosomes and keep only bi-allelic alelles
-	vcftools --gzvcf {wdir}/trimmed.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+	vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
         """
@@ -185,7 +185,7 @@ rule phasing_vcf:
     shell:
         """
 	# Remove --thread {config[cores]} if causing errors 	
-        shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window 1 --thread {config[cores]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
+        shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window 10 --thread 1 --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length
         zcat {wdir}/{dataset}.vcf.gz | grep '^#' > {wdirpop}/newheader
