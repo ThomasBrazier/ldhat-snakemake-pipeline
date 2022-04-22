@@ -375,9 +375,13 @@ rule pseudodiploid:
     shell:
         """
         if [ {config[pseudodiploid]} -eq 1 ]; then
-            Rscript pseudodiploids.R {wdirpop} {chrom}
+            Rscript pseudodiploids.R {wdirpop} {chrom } 1
         else
-            cp {input} {output}
+	    if [ {config[pseudodiploid]} -eq 2 ]; then
+	        Rscript pseudodiploids.R {wdirpop} {chrom } 2
+            else
+	        cp {input} {output}
+	    fi
         fi
 	"""
 
