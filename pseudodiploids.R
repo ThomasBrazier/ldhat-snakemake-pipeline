@@ -2,12 +2,17 @@
 args = commandArgs(trailingOnly=TRUE)
 # <wdirpop> must be passed in argument
 
+# Reshuffling code:
+# 1 - Discard one of the two haplotypes in each individual before reshuffling
+# 2- Reshuffle but keep all haplotypes
+
 # test if there are two arguments: if not, return an error
-if (length(args) != 2) {
- stop("<wdirpop> and <chromosome> must be passed in argument", call.=FALSE)
+if (length(args) != 3) {
+ stop("<wdirpop>, <chromosome> and the reshuffling code (1 or 2) must be passed in argument", call.=FALSE)
 }
 wdirpop = args[1]
 chromosome = args[2]
+reshuf = args[3]
 # wdirpop = "data/Oryza_sativa_McCouch2016/K3.pop2"
 # chromosome = "1"
 require(vcfR)
@@ -30,25 +35,31 @@ matpos1 = apply(genotypes, c(1,2), function(x){strsplit(x, sep)[[1]][1]})
 matpos2 = apply(genotypes, c(1,2), function(x){strsplit(x, sep)[[1]][3]})
 # Make pseudodiploids by randomly pairing haplotypes
 set.seed(42)
-# Keep only one haplotype per individual -> matpos1
-# Sample n haplotypes in matpos1 and m other in matpos2, n = m, and m is the complement of n
-# idx = sample(rep())
-# matpos1 = sample(matpos1, replace = FALSE)
-# Two times less individuals in the genotype matrix
-if (ncol(matpos1) %% 2 != 0) {
-  matpos1 = matpos1[,-1]
+if (reshuf == 1) {
+  # Keep only one haplotype per individual -> matpos1
+  # Sample n haplotypes in matpos1 and m other in matpos2, n = m, and m is the complement of n
+  # Two times less individuals in the genotype matrix
+  if (ncol(matpos1) %% 2 != 0) {
+    matpos1 = matpos1[,-1]
+  }
+  idx_sample = sample(seq(1, ncol(matpos1)/2), replace = FALSE)
+  # Resample individuals to make pseudodiploids from two haploid individuals
+  new_genotypes = paste(matpos1[,idx_sample],
+                        matpos1[,-idx_sample], sep = sep)
+  
+  new_id_sample = paste(colnames(matpos1)[idx_sample], colnames(matpos1)[-idx_sample], sep = "_")
+  
+  # new_genotypes = paste(matpos1[sample(seq(1, nrow(matpos1)), replace = FALSE),],
+  #                       matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = sep)
+  new_genotypes = matrix(new_genotypes, nrow = nrow(matpos1), ncol = ncol(matpos1)/2,
+                         dimnames = list(seq(1, nrow(matpos1)), new_id_sample))
 }
-idx_sample = sample(seq(1, ncol(matpos1)/2), replace = FALSE)
-# Resample individuals to make pseudodiploids from two haploid individuals
-new_genotypes = paste(matpos1[,idx_sample],
-                      matpos1[,-idx_sample], sep = sep)
-
-new_id_sample = paste(colnames(matpos1)[idx_sample], colnames(matpos1)[-idx_sample], sep = "_")
-
-# new_genotypes = paste(matpos1[sample(seq(1, nrow(matpos1)), replace = FALSE),],
-#                       matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = sep)
-new_genotypes = matrix(new_genotypes, nrow = nrow(matpos1), ncol = ncol(matpos1)/2,
-                       dimnames = list(seq(1, nrow(matpos1)), new_id_sample))
+if (reshuf == 2) {
+  new_genotypes = paste(matpos1[sample(seq(1, nrow(matpos1)), replace = FALSE),],
+                        matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = sep)
+  new_genotypes = matrix(new_genotypes, nrow = nrow(genotypes), ncol = ncol(genotypes),
+                         dimnames = list(seq(1, nrow(genotypes)), colnames(genotypes)))
+}
 new_genotypes = cbind(GT, new_genotypes)
 colnames(new_genotypes)[1] = "FORMAT"
 
