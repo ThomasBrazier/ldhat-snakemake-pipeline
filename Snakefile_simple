@@ -55,7 +55,7 @@ rule poplist:
     shell:
         """
         perl -ane '$r = 0; for my $i (1 .. $#F) {{$r = $i if $F[$i] > $F[$r];}} print $r + 1, " ";' < {wdir}/structure/faststructure.{K}.meanQ > {wdirpop}/structure/cluster.tmp
-        sed -i -e "s/\\s\\+/\\n/g" {wdir}/structure/cluster.tmp
+        sed -i -e "s/\\s\\+/\\n/g" {wdirpop}/structure/cluster.tmp
         paste {wdir}/indlist {wdirpop}/structure/cluster.tmp > {wdirpop}/structure/cluster.tmp2
         paste {wdirpop}/structure/cluster.tmp2 {wdir}/structure/faststructure.{K}.meanQ > {wdirpop}/structure/cluster
         awk -F' ' '{{if($2=={pop}) print $1}}' {wdirpop}/structure/cluster > {wdirpop}/poplist
@@ -139,11 +139,9 @@ rule phasing_vcf:
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
     output:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
-        temporary("{wdirpop}/{dataset}.chromosome.{chrom}.haps"),
-        temporary("{wdirpop}/{dataset}.chromosome.{chrom}.sample")
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     params:
-        window=10 # Phasing window
+        window=1000 # Phasing window
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.phasing_vcf.log"
     conda:
@@ -181,10 +179,10 @@ rule pseudodiploid:
     shell:
         """
         if [ {config[pseudodiploid]} -eq 1 ]; then
-            Rscript pseudodiploids.R {wdirpop} {chrom } 1
+            Rscript pseudodiploids.R {wdirpop} {chrom} 1
         else
 	        if [ {config[pseudodiploid]} -eq 2 ]; then
-	            Rscript pseudodiploids.R {wdirpop} {chrom } 2
+	            Rscript pseudodiploids.R {wdirpop} {chrom} 2
             else
 	            cp {input} {output}
 	        fi
