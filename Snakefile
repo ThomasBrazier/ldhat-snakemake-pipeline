@@ -44,9 +44,7 @@ rule poplist:
     Sample individuals from a given genetic cluster (number of K to retain and name of the cluster) specified in config.yaml
     """
     output:
-        "{wdirpop}/poplist",
-        temporary("{wdir}/structure/cluster.tmp"),
-        temporary("{wdir}/structure/cluster.tmp2")
+        "{wdirpop}/poplist"
     log:
         "{wdirpop}/logs/poplist.log"
     conda:
@@ -148,9 +146,7 @@ rule demography:
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
     output:
-        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json",
-        temporary("~/iterate.dat"),
-        temporary("{wdirpop}/smc/vcf2smc.{chrom}")
+        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
     params:
         regularizationpenalty=5,
         nonsegcutoff=50000,
@@ -185,13 +181,7 @@ rule phasing_vcf:
     input:
         "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
     output:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
-        temporary("{wdirpop}/{dataset}.chromosome.{chrom}.haps"),
-        temporary("{wdirpop}/{dataset}.chromosome.{chrom}.sample"),
-        temporary("{wdirpop}/newheader"),
-        temporary("{wdirpop}/newheader2"),
-        temporary("{wdirpop}/colnames"),
-        temporary("{wdirpop}/newvcf")
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     params:
         window=10
     log:
@@ -230,10 +220,10 @@ rule pseudodiploid:
     shell:
         """
         if [ {config[pseudodiploid]} -eq 1 ]; then
-            Rscript pseudodiploids.R {wdirpop} {chrom } 1
+            Rscript pseudodiploids.R {wdirpop} {chrom} 1i
         else
 	        if [ {config[pseudodiploid]} -eq 2 ]; then
-	            Rscript pseudodiploids.R {wdirpop} {chrom } 2
+	            Rscript pseudodiploids.R {wdirpop} {chrom} 2
             else
 	            cp {input} {output}
 	        fi
@@ -348,7 +338,7 @@ rule interval:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
-        temporary("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.type_table.txt")
+        temporary("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.type_table.txt")
     log:
         "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
     shell:
