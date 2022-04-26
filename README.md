@@ -31,6 +31,13 @@ snakemake -s data_preprocessing.snake --use-conda --conda-create-envs-only
 snakemake --use-conda --conda-create-envs-only
 ```
 
+Pre-generated look up tables are necessary for LDhat.
+
+```
+wget https://github.com/auton1/LDhat/tree/master/lk_files
+```
+
+
 ## Usage
 
 Put your `<dataset>` in `data/`.

@@ -37,8 +37,6 @@ matpos2 = apply(genotypes, c(1,2), function(x){strsplit(x, sep)[[1]][3]})
 set.seed(42)
 if (reshuf == 1) {
   # Keep only one haplotype per individual -> matpos1
-  # Sample n haplotypes in matpos1 and m other in matpos2, n = m, and m is the complement of n
-  # Two times less individuals in the genotype matrix
   if (ncol(matpos1) %% 2 != 0) {
     matpos1 = matpos1[,-1]
   }
@@ -46,11 +44,7 @@ if (reshuf == 1) {
   # Resample individuals to make pseudodiploids from two haploid individuals
   new_genotypes = paste(matpos1[,idx_sample],
                         matpos1[,-idx_sample], sep = sep)
-  
   new_id_sample = paste(colnames(matpos1)[idx_sample], colnames(matpos1)[-idx_sample], sep = "_")
-  
-  # new_genotypes = paste(matpos1[sample(seq(1, nrow(matpos1)), replace = FALSE),],
-  #                       matpos2[sample(seq(1, nrow(matpos2)), replace = FALSE),], sep = sep)
   new_genotypes = matrix(new_genotypes, nrow = nrow(matpos1), ncol = ncol(matpos1)/2,
                          dimnames = list(seq(1, nrow(matpos1)), new_id_sample))
 }
