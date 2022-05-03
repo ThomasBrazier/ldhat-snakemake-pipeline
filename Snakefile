@@ -44,24 +44,32 @@ rule poplist:
     Sample individuals from a given genetic cluster (number of K to retain and name of the cluster) specified in config.yaml
     """
     output:
-        "{wdirpop}/poplist"
+        "{wdirpop}/poplist",
+        temporary("{wdirpop}/structure/cluster.tmp"),
+        temporary("{wdirpop}/structure/cluster.tmp2"),
+        temporary("{wdirpop}/structure/cluster")
     log:
         "{wdirpop}/logs/poplist.log"
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-        perl -ane '$r = 0; for my $i (1 .. $#F) {{$r = $i if $F[$i] > $F[$r];}} print $r + 1, " ";' < {wdir}/structure/faststructure.{K}.meanQ > {wdir}/structure/cluster.tmp
-        sed -i -e "s/\\s\\+/\\n/g" {wdir}/structure/cluster.tmp
-        paste {wdir}/indlist {wdir}/structure/cluster.tmp > {wdir}/structure/cluster.tmp2
-        paste {wdir}/structure/cluster.tmp2 {wdir}/structure/faststructure.{K}.meanQ > {wdir}/structure/cluster
-        awk -F' ' '{{if($2=={pop}) print $1}}' {wdir}/structure/cluster > {wdirpop}/poplist
+        perl -ane '$r = 0; for my $i (1 .. $#F) {{$r = $i if $F[$i] > $F[$r];}} print $r + 1, " ";' < {wdir}/structure/faststructure.{K}.meanQ > {wdirpop}/structure/cluster.tmp
+        sed -i -e "s/\\s\\+/\\n/g" {wdirpop}/structure/cluster.tmp
+        paste {wdir}/indlist {wdirpop}/structure/cluster.tmp > {wdirpop}/structure/cluster.tmp2
+        paste {wdirpop}/structure/cluster.tmp2 {wdir}/structure/faststructure.{K}.meanQ > {wdirpop}/structure/cluster
+        awk -F' ' '{{if($2=={pop}) print $1}}' {wdirpop}/structure/cluster > {wdirpop}/poplist
         """
 
 
 rule sampling_pop:
     """
     A first step to trim every 'sample' dataset to the same quality criteria
+    Filtering:
+    - keep only biallelic
+    - perform HWE test on site to remove excess of heterozygotes
+    - maf
+    - missing data
     """
     input:
         "{wdirpop}/poplist"
@@ -76,7 +84,9 @@ rule sampling_pop:
         # Filter chromosomes and keep only bi-allelic alelles
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
-        bgzip -f {wdirpop}/{dataset}.pop.vcf
+	bgzip -f {wdirpop}/{dataset}.pop.vcf
+        bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
+	bgzip -f {wdirpop}/{dataset}.pop.vcf
         tabix {wdirpop}/{dataset}.pop.vcf.gz
         """
 
@@ -127,51 +137,6 @@ rule split_chromosome:
         """
 
 
-# TODO Take care of run of homozygosity (mask): raise WARNING
-# Plink  search for ROH
-# TODO How to treat selfing: https://github.com/popgenmethods/smcpp/issues/82
-# TODO optimization: thinning, spline, knots, cores
-rule demography:
-    """
-    Pre-estimate demography with smc++ to use it as a prior in likelihood
-    Subset a small sample size is enough to achieve good accuracy (memory issues)
-    Each chromosome is treated independently in vcf2smc
-    then a consensus model is estimated on all chromosomes
-    i.e. same demographic history for all chromosomes
-
-    Terhorst J, Kamm JA, Song YS. Robust and scalable inference of
-    population history from hundreds of unphased whole genomes.
-    Nat Genet. 2017 Feb;49(2):303–9.
-    """
-    input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
-    output:
-        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
-    params:
-        regularizationpenalty=5,
-        nonsegcutoff=50000,
-        thinning=400
-    log:
-        "{wdirpop}/logs/{dataset}.{chrom}.demography.log"
-    conda:
-        "envs/vcftools.yaml"
-    shell:
-        """
-        echo $(cat {wdirpop}/statistics/{dataset}.effective_size)
-        shuf -n {config[subset]} --random-source=<(yes {config[seed]}) {wdirpop}/poplist > {wdirpop}/subsetpop
-        # Select a pair of distinguished lineages
-        dist=$(echo $(shuf -n 2 --random-source=<(yes {config[seed]}) {wdirpop}/poplist))
-        echo $dist
-        individuals=$(cat {wdirpop}/subsetpop | tr '\n' ',' | sed "s/,$//g")
-        echo $individuals
-	    singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc --missing-cutoff 50000 --ignore-missing -d $dist /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz /mnt/{wdirpop}/smc/vcf2smc.{chrom} {chrom} pop1:$individuals
-	    singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smc/ --nonseg-cutoff {params.nonsegcutoff} --thinning {params.thinning} --regularization-penalty {params.regularizationpenalty} --timepoints 1e1 1e10 {config[mu]} /mnt/{wdirpop}/smc/vcf2smc.{chrom}
-	    mv {wdirpop}/smc/model.final.json {wdirpop}/smc/{dataset}.{chrom}.model.final.json
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot /mnt/{wdirpop}/smc/plot_chromosome.{chrom}.pdf /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json -c
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ posterior --heatmap /mnt/{wdirpop}/smc/{dataset}.{chrom}.heatmap.png /mnt/{wdirpop}/smc/{dataset}.{chrom}.model.final.json /mnt/{wdirpop}/smc/{dataset}.{chrom}.posterior.smc /mnt/{wdirpop}/smc/vcf2smc.{chrom}
-        #mv ~/iterate.dat {wdirpop}/smc/{dataset}.{chrom}.iterate.dat
-        """
-
 rule phasing_vcf:
     """
     Phase the vcf with Shapeit2
@@ -179,11 +144,11 @@ rule phasing_vcf:
     https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html#output
     """
     input:
-        "{wdirpop}/smc/{dataset}.{chrom}.model.final.json"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     params:
-        window=10
+        window=1000 # Phasing window
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.phasing_vcf.log"
     conda:
@@ -200,14 +165,15 @@ rule phasing_vcf:
         cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep -v '^#' > {wdirpop}/newvcf
         cat {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf > {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf
-        #rm {wdirpop}/newheader {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf
+        rm {wdirpop}/newheader {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf
         """
-
 
 
 rule pseudodiploid:
     """
     Make pseudodiploids (phased haplotypes) to take into account homozygotes in high-selfing rates species
+    Method 1. Keep only one haplotype per individual and reconstruct diploids
+    Method 2. Keep both haplotypes and resample among individuals
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
@@ -220,7 +186,7 @@ rule pseudodiploid:
     shell:
         """
         if [ {config[pseudodiploid]} -eq 1 ]; then
-            Rscript pseudodiploids.R {wdirpop} {chrom} 1i
+            Rscript pseudodiploids.R {wdirpop} {chrom} 1
         else
 	        if [ {config[pseudodiploid]} -eq 2 ]; then
 	            Rscript pseudodiploids.R {wdirpop} {chrom} 2
@@ -228,7 +194,7 @@ rule pseudodiploid:
 	            cp {input} {output}
 	        fi
         fi
-	"""
+        """
 
 
 rule gzpseudodiploid:
@@ -276,33 +242,47 @@ rule subset_ldhat:
 	    bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
-# Use LDHat/LDhot to estimate fine scale recombination rate and detect hotspots
-rule LDpop:
+#rule complete:
+#    """
+#    Generate a complete look-up table
+#    """
+#    input:
+#        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
+#    output:
+#        "{wdirpop}/ldhat/{dataset}.lookup.{chrom}"
+#    log:
+#        "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
+#    shell:
+#        """
+#        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+#        n=$((2*$n))
+#	echo $n
+#        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
+#	"""
+
+
+rule lkgen:
     """
-    Generate a demography-aware look-up table
+    Generate a complete look-up table from a preexisting one
+    https://github.com/auton1/LDhat/tree/master/lk_files
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
-        "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}"
+        "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt"
     log:
-        "{wdirpop}/logs/{dataset}.ldpop.{chrom}.log"
-    conda:
-        "envs/jq.yaml"
+        "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
     shell:
         """
-        N0=$( jq '.model.N0' {wdirpop}/smc/{dataset}.{chrom}.model.final.json)
-        coal_sizes=$( jq '.model.y' {wdirpop}/smc/{dataset}.{chrom}.model.final.json | tr -d '[:space:][]')
-        coal_sizes=$(echo $coal_sizes | awk '{{split($0, temp, ","); for(i=1; i < length(temp)+1; i++) {{a=exp(temp[i]); print a}}}}')
-        coal_sizes=$(echo $coal_sizes | tr -s '[:space:]' ',')
-        coal_sizes=${{coal_sizes%?}}
-        coal_sizes="$N0","$coal_sizes"
-        coal_times=$( jq '.model.knots' {wdirpop}/smc/{dataset}.{chrom}.model.final.json | tr -d '[:space:][]')
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
-	    echo $n
-        singularity exec --bind $PWD:/mnt pyrho.sif python3 /ldpop/run/ldtable.py -n $n -th {config[theta]} -s $coal_sizes -t $coal_times -rh 101,100 --approx --cores {config[cores]} --log . > {wdirpop}/ldhat/{dataset}.ldpop.{chrom}
-        """
+	echo $n
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n192_t0.001 -nseq $n
+	#singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -lk /mnt/lk_files/lk_n192_t0.001 -nseq $n
+	#mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.lookup.{chrom}.txt
+	"""
+
+
 
 rule convert:
     """
@@ -313,7 +293,7 @@ rule convert:
     These options output data in LDhat format. This option requires the "--chr" filter option to also be used. The first option outputs phased data only, and therefore also implies "--phased" be used, leading to unphased individuals and genotypes being excluded. The second option treats all of the data as unphased, and therefore outputs LDhat files in genotype/unphased format. Two output files are generated with the suffixes ".ldhat.sites" and ".ldhat.locs", which correspond to the LDhat "sites" and "locs" input files respectively.
     """
     input:
-        ldpop = "{wdirpop}/ldhat/{dataset}.ldpop.{chrom}",
+        lookup = "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt",
         vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
@@ -346,7 +326,7 @@ rule interval:
         iter={config[interval.iter]}
         samp={config[interval.samp]}
         bpen={config[bpen]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.
         """
 
 
@@ -384,7 +364,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.ldpop.{chrom} --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         # Summarize the results
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         """
