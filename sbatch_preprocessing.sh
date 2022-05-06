@@ -3,6 +3,7 @@
 #SBATCH --mail-type=all
 #SBATCH --time=12-60:00:00
 #SBATCH --job-name=preprocessing
+#SBATCH --mem=515799
 ## the only expected argument is <dataset>
 
 ## load the necessary environement (used for Genouest cluster)
