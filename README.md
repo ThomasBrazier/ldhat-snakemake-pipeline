@@ -75,6 +75,11 @@ One chromosome is run at a time. You must specify which chromosome to process in
 Contig length in the vcf file header are necessary at the phasing step. You should verify this features before running analyses and annotate your vcf if necessary.
 
 
+### LDhat
+
+Theta must be specified in the `config.yaml` file. To date, only theta = 0.01 or theta = 0.001 are allowed. The look-up table will be computed from a pre-generated one with the lkgen function of LDhat. A maximum of 100 haploid individuals is allowed (50 diploids).
+
+
 ### Files
 
 * <dataset>.vcf.gz, a tabix vcf file, bgzipped
@@ -82,6 +87,7 @@ Contig length in the vcf file header are necessary at the phasing step. You shou
 
 
 ## Options
+
 
 
 ## Details
