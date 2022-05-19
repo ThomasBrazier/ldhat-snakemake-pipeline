@@ -277,7 +277,7 @@ rule lkgen:
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
 	echo $n
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n192_t0.001 -nseq $n
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n100_t{config[theta]} -nseq $n
 	#singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -lk /mnt/lk_files/lk_n192_t0.001 -nseq $n
 	#mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.lookup.{chrom}.txt
 	"""
