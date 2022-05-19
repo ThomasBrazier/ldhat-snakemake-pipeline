@@ -14,6 +14,8 @@ __pycache__/
 # C extensions
 *.so
 
+lk_files/lk_n192_t0.001
+
 # Distribution / packaging
 .Python
 build/
