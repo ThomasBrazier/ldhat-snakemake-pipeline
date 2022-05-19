@@ -15,6 +15,7 @@ __pycache__/
 *.so
 
 lk_files/lk_n192_t0.001
+lk_files/lk_n100_t0.01
 
 # Distribution / packaging
 .Python
