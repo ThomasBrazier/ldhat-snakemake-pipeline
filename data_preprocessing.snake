@@ -68,6 +68,12 @@ rule trimming_vcf:
         # Collapse duplicate SNPs with identical positions
         bcftools norm -d all {wdir}/trimmed.vcf.gz -o {wdir}/trimmed.vcf
         rm {wdir}/trimmed.vcf.gz
+        # Subset N random SNPs (default=100,000)
+        N=100000
+        cat {wdir}/trimmed.vcf | grep '^#' > {wdir}/new_vcf.vcf
+        cat {wdir}/trimmed.vcf | grep -v '^#' | shuf -n $N  >> {wdir}/new_vcf.vcf
+        rm {wdir}/trimmed.vcf
+        mv {wdir}/new_vcf.vcf {wdir}/trimmed.vcf
         bgzip {wdir}/trimmed.vcf
         """
 
