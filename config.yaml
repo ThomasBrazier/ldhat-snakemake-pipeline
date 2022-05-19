@@ -5,17 +5,17 @@ latency-wait: 60
 # Sample
 dataset: "Oryza_sativa_McCouch2016"
 chrom: "1"
-maf: 0.01
+maf: 0.05
 missing: 0.1
-maxmissing: 0.8
+maxmissing: 0.9
 subset: 40
 # data_preprocessing
-maxk: 7
+maxk: 4
 # recombination map processing
 K: 3
 pop: 2
 mu: 1.28e-8
-theta: 0.01
+theta: 0.001
 knots: 8 # Number of knots in SMC++ estimate
 ploidy: 1
 pseudodiploid: 1

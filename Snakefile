@@ -87,7 +87,7 @@ rule sampling_pop:
 	bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
 	bgzip -f {wdirpop}/{dataset}.pop.vcf
-        tabix {wdirpop}/{dataset}.pop.vcf.gz
+        tabix --csi {wdirpop}/{dataset}.pop.vcf.gz
         """
 
 
