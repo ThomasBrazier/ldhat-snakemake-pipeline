@@ -16,6 +16,7 @@ __pycache__/
 
 lk_files/lk_n192_t0.001
 lk_files/lk_n100_t0.01
+lk_files/lk_n100_t0.001
 
 # Distribution / packaging
 .Python

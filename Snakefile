@@ -132,7 +132,7 @@ rule split_chromosome:
         vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
-        tabix -f -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
+        #tabix -f -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
         tabix -f --csi -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
         """
 
