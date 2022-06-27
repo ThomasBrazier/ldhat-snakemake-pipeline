@@ -148,7 +148,7 @@ rule phasing_vcf:
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     params:
-        window=1000 # Phasing window
+        window={config[shapeit.window]} # Phasing window
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.phasing_vcf.log"
     conda:
