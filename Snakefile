@@ -355,13 +355,30 @@ rule stat:
 	"""
 
 
+rule MCMC_diagnostic_plot:
+    """
+    Diagnostic plots for convergenc eof the MCMC sampling chain
+    """
+    input:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+    output:
+        "{wdirpop}/mcmc/{dataset}.{chrom}.bpen{bpen}.jpeg"
+    conda:
+	"envs/Renv.yaml"
+    log:
+        "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.mcmcdiag.log"
+    shell:
+        """
+	Rscript ldhat_MCMC.R {wdirpop} {config[dataset]} {config[chrom]} {config[bpen]}
+        """
+
 rule LDhot:
     """
     Infer recombination hotspots
     LDhot
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+        "{wdirpop}/mcmc/{dataset}.{chrom}.bpen{bpen}.jpeg"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",

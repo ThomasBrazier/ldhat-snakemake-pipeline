@@ -32,7 +32,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/{dataset}.theta.txt",wdirpop=wdirpop,dataset=dataset),
+        target = expand("{wdirpop}/{dataset}.thetaW.txt",wdirpop=wdirpop,dataset=dataset),
     shell:
         "echo 'Finished'"
 
@@ -95,6 +95,30 @@ rule sampling_pop:
         #tabix --csi {wdirpop}/{dataset}.theta.vcf.gz
 	"""
 
+rule effective_size:
+     """
+     Estimate population effective size
+     """
+     input:
+         "{wdirpop}/{dataset}.pop.vcf.gz"
+     output:
+         "{wdirpop}/statistics/{dataset}.effective_size"
+     log:
+         "{wdirpop}/logs/{dataset}.effective_size.log"
+     conda:
+         "envs/vcftools.yaml"
+     params:
+         windowsize=100000
+     shell:
+        """
+        vcftools --gzvcf {input} --window-pi {params.windowsize} --out {wdirpop}/statistics/vcftools
+        eff_size=$(awk '{{sum+=$5}} END {{sum=(sum/NR)/(4*{config[mu]}); print sum}}' {wdirpop}/statistics/vcftools.windowed.pi)
+        echo ${{eff_size/.*}} > {output}
+	# Coalescent Theta Pi
+	thetapi=$(expr 4 \* $eff_size \* {config[mu]})
+	echo $thetapi > {wdirpop}/statistics/{dataset}.theta.pi 
+        """
+
 rule theta:
     """
     Estimate Theta Watterson
@@ -102,7 +126,7 @@ rule theta:
     input:
         "{wdirpop}/{dataset}.theta.vcf.gz"
     output:
-        "{wdirpop}/{dataset}.theta.txt"
+        "{wdirpop}/{dataset}.thetaW.txt"
     log:
         "{wdirpop}/logs/{dataset}.theta.log"
     conda:
@@ -110,6 +134,6 @@ rule theta:
     shell:
         """
 	Rscript estimate_theta.R {wdirpop}
-	mv {wdirpop}/theta.txt {wdirpop}/{dataset}.theta.txt
+	mv {wdirpop}/theta.txt {wdirpop}/{dataset}.thetaW.txt
 	rm {wdirpop}/{dataset}.theta.vcf.gz
         """
