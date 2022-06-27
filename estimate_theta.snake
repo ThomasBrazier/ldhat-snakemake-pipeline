@@ -12,7 +12,6 @@ dataset=config["dataset"] # Name of your dataset directory and prefix of your vc
 chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' dataset
 K=str(config["K"])
 pop=str(config["pop"])
-bpen=config["bpen"]
 
 
 wdir=config["workingdir"] + dataset
@@ -26,7 +25,6 @@ wildcard_constraints:
     chrom=chrom,
     K=K,
     pop=pop,
-    bpen=bpen
 
 
 rule all:
@@ -34,7 +32,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/theta.txt",wdirpop=wdirpop),
+        target = expand("{wdirpop}/{dataset}.theta.txt",wdirpop=wdirpop,dataset=dataset),
     shell:
         "echo 'Finished'"
 
@@ -119,12 +117,13 @@ rule theta:
     input:
         "{wdirpop}/statistics/{dataset}.effective_size"
     output:
-        "{wdirpop}/theta.txt"
+        "{wdirpop}/{dataset}.theta.txt"
     log:
         "{wdirpop}/logs/{dataset}.theta.log"
     conda:
         "envs/Renv.yaml"
     shell:
         """
-	Rscript pseudodiploids.R {wdirpop}
+	Rscript estimate_theta.R {wdirpop}
+	mv {wdirpop}/theta.txt {wdirpop}/{dataset}.theta.txt
         """
