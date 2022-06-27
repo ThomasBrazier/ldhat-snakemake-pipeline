@@ -339,14 +339,19 @@ rule stat:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
     log:
         "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
     shell:
         """
         burn={config[ldhat.burn]}
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.
-        """
+        # Compress intermediary files
+	gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+        gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
+	"""
 
 
 rule LDhot:
