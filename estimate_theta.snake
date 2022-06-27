@@ -92,7 +92,7 @@ rule sampling_pop:
 	rm {wdirpop}/out.recode.vcf
 	mv {wdirpop}/new_vcf.vcf {wdirpop}/{dataset}.theta.vcf
 	bgzip -f {wdirpop}/{dataset}.theta.vcf
-        tabix --csi {wdirpop}/{dataset}.theta.gz
+        #tabix --csi {wdirpop}/{dataset}.theta.vcf.gz
 	"""
 
 rule theta:

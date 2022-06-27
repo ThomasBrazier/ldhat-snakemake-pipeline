@@ -45,7 +45,7 @@ df = data.frame(mean.theta = mean(boot, na.rm = TRUE),
                 upper.theta = quantile(boot, 0.975, na.rm = TRUE))
 
 # Save results
-write.table(df, file = paste(wdirpop, "theta.txt", sep = ""),
+write.table(df, file = paste(wdirpop, "/theta.txt", sep = ""),
             quote = F, col.names = T, row.names = F, sep = "\t")
 
 
