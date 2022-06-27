@@ -15,7 +15,7 @@ require(vcfR)
 require(pegas)
 
 # vcf_file = "data/Oryza_sativa_McCouch2016/Oryza_sativa_McCouch2016_test.vcf.gz"
-vcf_file = list.files(path = wdirpop, pattern = paste(set, ".pop.vcf.gz$", sep = ""), full.names = TRUE)
+vcf_file = list.files(path = wdirpop, pattern = paste(".pop.vcf.gz$", sep = ""), full.names = TRUE)
 
 cat("Loading vcf file", vcf_file,".\n")
 vcf = read.vcfR(vcf_file, verbose = FALSE, convertNA = FALSE)
