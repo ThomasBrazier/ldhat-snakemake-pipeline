@@ -34,7 +34,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
+        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
     shell:
         "echo 'Finished'"
 
@@ -263,6 +263,7 @@ rule lkgen:
     """
     Generate a complete look-up table from a preexisting one
     https://github.com/auton1/LDhat/tree/master/lk_files
+    or generate a new one if explicitly asked in config.yaml
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
@@ -272,12 +273,14 @@ rule lkgen:
         "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
     shell:
         """
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
+	n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
-	echo $n
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n100_t{config[theta]} -nseq $n
-	#singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -lk /mnt/lk_files/lk_n192_t0.001 -nseq $n
-	#mv ~/new_lk.txt {wdirpop}/ldhat/{dataset}.lookup.{chrom}.txt
+        echo $n
+	if [ {config[theta]} -eq 0.001 ] | [ {config[theta]} -eq 0.01 ]; then
+	    singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n100_t{config[theta]} -nseq $n
+	else
+	    singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 400 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
+	fi
 	"""
 
 
@@ -360,7 +363,8 @@ rule LDhot:
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
-        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt",
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
+	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
     log:
         "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.ldhot.log"
@@ -370,5 +374,8 @@ rule LDhot:
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         # Summarize the results
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
+	gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+	gzip {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
+	gzip {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
         """
 
