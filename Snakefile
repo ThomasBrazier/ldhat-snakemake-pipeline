@@ -39,7 +39,7 @@ rule all:
         "echo 'Finished'"
 
 
-rule poplist:
+rule poplst:
     """
     Sample individuals from a given genetic cluster (number of K to retain and name of the cluster) specified in config.yaml
     """
@@ -371,3 +371,4 @@ rule LDhot:
         # Summarize the results
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         """
+

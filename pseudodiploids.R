@@ -6,7 +6,7 @@ args = commandArgs(trailingOnly=TRUE)
 # 1 - Discard one of the two haplotypes in each individual before reshuffling
 # 2- Reshuffle but keep all haplotypes
 
-# test if there are two arguments: if not, return an error
+# test if there are three arguments: if not, return an error
 if (length(args) != 3) {
  stop("<wdirpop>, <chromosome> and the reshuffling code (1 or 2) must be passed in argument", call.=FALSE)
 }
