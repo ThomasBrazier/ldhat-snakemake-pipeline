@@ -113,7 +113,6 @@ rule effective_size:
         """
         vcftools --gzvcf {input} --window-pi {params.windowsize} --out {wdirpop}/statistics/vcftools
         eff_size=$(awk '{{sum+=$5}} END {{sum=(sum/NR)/(4*{config[mu]}); print sum}}' {wdirpop}/statistics/vcftools.windowed.pi)
-        echo ${{eff_size/.*}} > {output}
 	# Coalescent Theta Pi
 	thetapi=$(expr 4 \* $eff_size \* {config[mu]})
 	echo $thetapi > {wdirpop}/statistics/{dataset}.theta.pi 
