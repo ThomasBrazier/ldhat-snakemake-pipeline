@@ -276,10 +276,13 @@ rule lkgen:
 	n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
         n=$((2*$n))
         echo $n
-	if [ {config[theta]} -eq 0.001 ] | [ {config[theta]} -eq 0.01 ]; then
+	if [ "{config[completelk]}" == "no" ]
+	then
+	    echo "Runnning lkgen"
 	    singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n100_t{config[theta]} -nseq $n
 	else
-	    singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 400 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
+	    echo "Generate a new look-up table"
+	    singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta]} -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.
 	fi
 	"""
 
@@ -357,14 +360,14 @@ rule stat:
 
 rule MCMC_diagnostic_plot:
     """
-    Diagnostic plots for convergenc eof the MCMC sampling chain
+    Diagnostic plots for convergence of the MCMC sampling chain
     """
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
         "{wdirpop}/mcmc/{dataset}.{chrom}.bpen{bpen}.jpeg"
     conda:
-	"envs/Renv.yaml"
+        "envs/Renv.yaml"
     log:
         "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.mcmcdiag.log"
     shell:
@@ -388,7 +391,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{input} --nsim 100 --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{input} --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         # Summarize the results
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
 	gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
