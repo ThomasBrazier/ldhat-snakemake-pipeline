@@ -32,10 +32,17 @@ require(ggpubr)
 p1 = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
   geom_line() +
   xlab("Sample") + ylab("Median posterior")
+p1b = ggplot(mean.posterior, aes(x = posterior)) +
+  geom_density() +
+  xlab("Median posterior")
 # One position
 p2 = ggplot(mean.posterior, aes(x = iteration, y = posone)) +
   geom_line() +
   xlab("Sample") + ylab("Posterior position one")
+p2b = ggplot(mean.posterior, aes(x = posone)) +
+  geom_density() +
+  xlab("Posterior position one")
+
 
 # ggplot(mean.posterior, aes(x = iteration, y = pos1000)) +
 #   geom_line()
@@ -44,8 +51,12 @@ p2 = ggplot(mean.posterior, aes(x = iteration, y = posone)) +
 p3 = ggplot(mean.posterior, aes(x = iteration, y = totalgenetic)) +
   geom_line() +
   xlab("Sample") + ylab("Total genetic distance")
+p3b = ggplot(mean.posterior, aes(x = totalgenetic)) +
+  geom_density() +
+  xlab("Total genetic distance")
 
-p = ggarrange(p1, p2, p3, nrow = 3)
+
+p = ggarrange(p1, p1b, p2, p2b, p3, p3b, nrow = 3, ncol = 2)
 ggsave(paste(wdirpop, "/mcmc/", set, ".", chromosome, ".bpen", bpen, ".jpeg", sep = ""),
-       plot = p, device = jpeg(), width = 7, height = 12, dpi = 300)
+       plot = p, device = jpeg(), width = 14, height = 12, dpi = 300)
 
