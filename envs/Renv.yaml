@@ -8,3 +8,4 @@ dependencies:
   - r-adegenet
   - r-vcfr
   - r-poppr
+  - r-ggpubr

@@ -24,5 +24,5 @@ completelk: "no"
 interval.bpen: 25
 interval.samp: 5000
 interval.iter: 10000000
-ldhat.burn: 500
+ldhat.burn: 200
 ldhot.nsim: 100
