@@ -275,21 +275,39 @@ rule lkgen:
 rule split_dataset:
     """
     Split the dataset in pieces
+
+    Adama Auton advice: "For such datasets, you need to split up the data into smaller chunks. We
+    generally recommend splitting the data into ~2000 SNP windows, with ~100
+    SNPs overlapping. Once all of the windows have completed, you can split
+    together the results at the mid-points of the overlapping region."
     """
     input:
         "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt"
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.vcf.gz",
-        temporary("{wdirpop}/{dataset}.{chrom}.vcf")
+        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.vcf.gz"
     conda:
         "envs/vcftools.yaml"
     log:
         "{wdirpop}/logs/{dataset}.split_dataset.{chrom}.log"
     shell:
         """
-        bgzip --keep {wdirpop}/{dataset}.{chrom}.vcf.gz
-        python split_dataset.py {wdirpop}/{dataset}.{chrom}.vcf {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
-        ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep *.vcf | xargs gzip -f
+        # TODO Overlapping SNPs
+
+	# The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
+        bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.{chrom}.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions
+ 
+        python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
+        
+        i=1
+        for file in {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.pos
+        do
+        echo $file
+        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions $file --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
+        mv {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
+        gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
+        i=$(echo $(( i+1 )))
+        done
+        #rm x*
 	"""
 
 rule convert:
@@ -311,10 +329,10 @@ rule convert:
         "envs/vcftools.yaml"
     shell:
         """
-        nbatch=$(ls {wdirpop}/ldhat | grep {dataset}.{chrom}/batch_*.vcf.gz | wc -l)
-        for i in 1 .. $nbatch
+        nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .vcf.gz | wc -l)
+        for i in $(seq $nbatch)
         do
-        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}/batch_$i.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+        vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
         done
         """
 
@@ -338,11 +356,11 @@ rule interval:
         samp={config[interval.samp]}
         bpen={config[bpen]}
         # Number of batch files
-        nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch_*.ldhat.sites | wc -l)
-        for i in 1 .. $nbatch
+        nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
+        for i in $(seq $nbatch)
         do
         # Interval iteration
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
         done
         """
     
@@ -363,10 +381,10 @@ rule stat:
         """
         burn={config[ldhat.burn]}
         # Number of batch files
-        nbatch=$(ls {wdirpop}/ldhat | grep {dataset}.{chrom}/batch_*.ldhat.sites | wc -l)
-        for i in 1 .. $nbatch
+        nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
+        for i in $(seq $nbatch)
         do
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.batch_$i
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
 	done
         """
 
@@ -383,40 +401,66 @@ rule concatenate:
         "{wdirpop}/logs/{dataset}.concatenate.{chrom}.bpen{bpen}.log"
     shell:
         """
-        # Gzip batch files
-	ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep bpen{bpen}.batch_* | xargs gzip -f
         # Concatenate the output from LDhat interval/stat (previously run in block of 2K SNPs)
         # into one file per chromosome
-        
-        # First chunk
-	ls -v  {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt.gz  | head -n 1 |\
-        xargs zcat | grep -v "\-1\.00" |\
-        grep -v "Loci" | tail -n +{config[cut_overlap]} > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt
-        
-        # Next chunks
-        ls -v  {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt.gz  | tail -n +1 | head -n +1 |\
-        xargs zcat | grep -v "\-1\.00" |\
-        grep -v "Loci" | tail -n +{config[cut_overlap]} | head -n +{config[cut_overlap]} >> {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt
-        
-        # Last chunk
-        ls -v  {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt.gz  | tail -n 1 |\
-        xargs zcat | grep -v "\-1\.00" |\
-        grep -v "Loci" | head -n +{config[cut_overlap]} >> {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt
-	
+        echo "Concatenate into one file"
+        overlap={config[cut_overlap]}
+        chunk={config[cut_size]}
+        bigchunk=$(echo $(( $chunk-$overlap/2 )))
+        smalloverlap=$(echo $(( $overlap/2 )))
+        echo $bigchunk
+        echo $smalloverlap
+        cd {wdirpop}/ldhat/{dataset}.{chrom}/
+        echo $PWD
+        echo "First chunk"
+        n_batch=$(ls -v | grep bpen{bpen}.batch_ | grep .res.txt | wc -l)
+        echo bpen{bpen}.batch_1.res.txt
+        cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt 2> error.txt
+        for i in $(seq 2 $(( $n_batch-1 )))
+        do
+        echo bpen{bpen}.batch_$i.res.txt
+        cat bpen{bpen}.batch_$i.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+        done
+        echo bpen{bpen}.batch_$n_batch.res.txt
+        cat bpen{bpen}.batch_$n_batch.res.txt | grep -v "\-1\.00" | grep -v "Loci" | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+        cd ../../../../..
+        echo "Add header to the new results file"
         # TODO Add header for LDhot
         # Add "Loci    Mean_rho        Median  L95     U95"
 	# "    -1.000      40423.67760     40811.21141     37171.85487     41157.21268" 
         # the first entry in the rates.txt file corresponds to the total population
         # genetic distance across the region (the map length), i.e. the sum of each column
-        echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.header
-        Loci=-1.000
-        Mean_rho=$(zcat cat {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt | awk '{s+=$2} END {printf "%.0f\n", s}')
-        Median=$(zcat cat {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt | awk '{s+=$3} END {printf "%.0f\n", s}')
-        L95=$(zcat cat {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt | awk '{s+=$4} END {printf "%.0f\n", s}')
-        U95=$(zcat cat {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt | awk '{s+=$5} END {printf "%.0f\n", s}')
-        echo "$Loci	$Mean_rho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.header
-        cat {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-        #gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+        echo "Loci      Mean_rho        Median  L95     U95"
+        echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+        Loci="-1.000"
+        MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
+        Median=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$3}} END {{printf "%.0f", s}}')
+        L95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$4}} END {{printf "%.0f", s}}')
+        U95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$5}} END {{printf "%.0f", s}}')
+        echo "$Loci     $MeanRho        $Median $L95    $U95"
+        echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+        cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
+        cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
+        cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+        """
+
+
+rule LDhot_convert:
+    """
+    Reconcile ldhat.locs/ldhat.sites and res.txt for LDhot input
+    """
+    input:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+    output:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.sites",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.locs"
+    log:
+        "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.bpen{bpen}.log"
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}
         """
  
 
@@ -426,7 +470,9 @@ rule LDhot:
     LDhot
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.sites",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.locs"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
@@ -436,9 +482,9 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{input} --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
         # Summarize the results
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{input} --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
+        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{config[bpen]}
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
