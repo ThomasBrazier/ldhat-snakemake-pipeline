@@ -297,15 +297,13 @@ rule split_dataset:
         bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.{chrom}.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions
  
         python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
-        
-        i=1
-        for file in {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.pos
+
+        nbatch=$(ls -v {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .pos | wc -l)
+        for i in $(seq $nbatch)
         do
-        echo $file
-        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions $file --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
+        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
         mv {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
         gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
-        i=$(echo $(( i+1 )))
         done
         #rm x*
 	"""
