@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
 #SBATCH --mail-type=all
-#SBATCH --time=12-60:00:00
+#SBATCH --mem=60GB
+#SBATCH --time=20-60:00:00
 #SBATCH --job-name=LDmap
 
 . /local/env/envsnakemake-6.0.5.sh
