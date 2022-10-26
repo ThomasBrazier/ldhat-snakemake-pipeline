@@ -302,13 +302,26 @@ rule split_dataset:
 
         nbatch=$(ls -v {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .pos | wc -l)
 
-        for i in $(seq $nbatch)
-        do
-        vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
-        mv {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
-        gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
-        done
+        #for i in $(seq $nbatch)
+        #do
+        #vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
+        #mv {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
+        #gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf
+        #done
         #rm x*
+
+	for i in $(seq $nbatch)
+	do
+	sem -j+0 vcftools --gzvcf {wdirpop}/{dataset}.{chrom}.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
+	done
+	sem --wait
+
+	for i in $(seq $nbatch)
+	do
+	sem -j+0 gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf
+	done
+	sem --wait
+
 
         # Validation step: if all succeeded, save the number of batches in a file
         echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
@@ -334,10 +347,12 @@ rule convert:
         """
         nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .vcf.gz | wc -l)
         for i in $(seq $nbatch)
-        do
-        vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
-        done
-        echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
+	do
+	sem -j+0 vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+	done
+	sem --wait
+
+	echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
         """
 
 
@@ -361,8 +376,10 @@ rule interval:
         for i in $(seq $nbatch)
         do
         # Interval iteration
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
+        sem -j+0 singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
         done
+	sem --wait
+
         echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
         """
     
@@ -384,8 +401,10 @@ rule stat:
         nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
         for i in $(seq $nbatch)
         do
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
+        sem -j+0 singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
 	done
+	sem --wait
+
 	echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
         """
 
