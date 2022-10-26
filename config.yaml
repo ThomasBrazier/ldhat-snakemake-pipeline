@@ -21,6 +21,8 @@ shapeitWindow: 2 # Window size in Mb
 ploidy: 1
 pseudodiploid: 1
 completelk: "no"
+cut_size: 2000
+cut_overlap: 200
 bpen: 5
 interval.samp: 5000
 interval.iter: 10000000

@@ -6,6 +6,8 @@ The cutting/concatenating scripts are originally written by Q. Rougemont
 https://github.com/QuentinRougemont/LDhat_workflow
 """
 
+import glob
+
 """
 Configuration of the analysis
 i.e. dataset, name of chromosome, population to sample
@@ -284,7 +286,6 @@ rule split_dataset:
     input:
         "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt"
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.vcf.gz",
         "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch"
     conda:
         "envs/vcftools.yaml"
@@ -294,7 +295,7 @@ rule split_dataset:
         """
         # TODO Overlapping SNPs
 
-	    # The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
+	# The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
         bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.{chrom}.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions
  
         python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
@@ -322,11 +323,9 @@ rule convert:
     These options output data in LDhat format. This option requires the "--chr" filter option to also be used. The first option outputs phased data only, and therefore also implies "--phased" be used, leading to unphased individuals and genotypes being excluded. The second option treats all of the data as unphased, and therefore outputs LDhat files in genotype/unphased format. Two output files are generated with the suffixes ".ldhat.sites" and ".ldhat.locs", which correspond to the LDhat "sites" and "locs" input files respectively.
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch",
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.ldhat.locs",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_convert"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
     log:
         "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.log"
     conda:
@@ -338,9 +337,7 @@ rule convert:
         do
         vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
         done
-
-        # Validation step: if all succeeded, save the number of batches processed in a file
-        echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_convert
+        echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
         """
 
 
@@ -349,14 +346,9 @@ rule interval:
     Estimate a recombination landscape with LDhat interval
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/batch_1.ldhat.locs",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_convert"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.new_lk.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.bounds.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.rates.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_interval"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
     log:
         "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
     shell:
@@ -371,9 +363,7 @@ rule interval:
         # Interval iteration
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
         done
-
-        # Validation step: if all succeeded, save the number of batches processed in a file
-        echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_interval
+        echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
         """
     
 
@@ -382,13 +372,9 @@ rule stat:
     Compute statistics on interval
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.new_lk.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.bounds.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.rates.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_interval"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
     output:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.res.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_stat"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
     log:
         "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
     shell:
@@ -399,10 +385,8 @@ rule stat:
         for i in $(seq $nbatch)
         do
         singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{config[bpen]}.batch_$i.
-	    done
-
-        # Validation step: if all succeeded, save the number of batches processed in a file
-        echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_stat
+	done
+	echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
         """
 
 
@@ -411,8 +395,7 @@ rule concatenate:
     Concatenate .res.txt files
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_1.res.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch_stat"
+        "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     log:
