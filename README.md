@@ -1,37 +1,35 @@
-# LDRecombinationMaps_pipeline
+# A Snakemake pipeline to estimate LD-based recombination maps
 
 ## Installation
 
 ### Dependencies
 
-Strict dependencies have to be installed before first run:
+Strict dependencies must be installed before first run:
 - conda
 - snakemake
 - singularity (> 3.0)
 
-To install, just clone the github directory.
+After installing dependencies, clone the github directory where you want to perform computations. The github directory will be your working directory.
 
 ```
-git clone
+git clone https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git 
 ```
 
-Singularity images are required. Run in the directory:
+In addition, Singularity images are required for additional softwares. Run within the working directory:
 
 ```
 singularity pull faststructure.sif docker://tombrazier/faststructure
-singularity pull smcpp.sif docker://terhorst/smcpp
-singularity pull pyrho.sif docker://tombrazier/pyrho
 singularity pull ldhat.sif docker://tombrazier/ldhat
 ```
 
-To install conda environments at first run, use
+To install conda environments at the first run of the pipeline, use
 
 ```
 snakemake -s data_preprocessing.snake --use-conda --conda-create-envs-only
 snakemake --use-conda --conda-create-envs-only
 ```
 
-Pre-generated look up tables are necessary for LDhat.
+Pre-generated look-up tables are necessary for LDhat. Make sure to download them in the working directory.
 
 ```
 wget https://github.com/auton1/LDhat/tree/master/lk_files
@@ -40,50 +38,69 @@ wget https://github.com/auton1/LDhat/tree/master/lk_files
 
 ## Usage
 
-Put your `<dataset>` in `data/`.
-
-The pipeline can be run for one/many samples and/or populations. Thus you need to give this information:
-* sample name
-* population to sample (after preliminary analyses)
-* chromosome to sample
-Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
-
-The workflow take into consideration the directory where the sample data is stored. Thus working directory must be set in 'config.yaml' when invoking Snakemake.
-
-To run the first step of the pipeline, invoke the 'data_preprocessing.snake' file to identify population structure in your dataset.
-
-```
-ncores=8
-snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores -j $ncores --config dataset=<dataset>
-```
-
+Put your `<dataset>` directory into `./data`.
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
 
+You can configure your pipeline in the `config.yaml` file that you must copy into the <dataset> directory.
+
+You need a first step of data preprocessing to infer the number of independent genetic populations in the sample (based on FastStructure [[1]](#1)) and output summary statistics to choose the most appropriate population in further analyses. It produces a file `structure/poplist.*.*` which contains the list of individuals to sample in the main pipeline.
 Once population structure is inferred from 'popstatistics.<K>', 'structure/chooseK' and 'structure/distruct.<K>.svg', run the main pipeline after specifying the chosen <K> number of genetic clusters to consider and the <population> to sample in your config.yaml.
+
+```
+ncores=<number of cores to use>
+snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores -j $ncores --config dataset=<dataset> chromosome=<chromosome>
+```
+
+After running the preprocessing step, run directly the main pipeline for a <dataset> and a single <chromosome> (don't forget to configure the `config.yaml` with your desired population).
 
 ```
 snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
 
-One chromosome is run at a time. You must specify which chromosome to process in the 'config.yaml'.
+Alternatively, you can use the Singularity launcher script and modify it for your custom needs.
 
-### SMC++
+```
+bash.sh <dataset> <chromosome>
+# or
+singularity bash.sh <dataset> <chromosome>
+```
+
+At the current stage, you can run as many <dataset> as you want in parallel, as directories are isolated, but only one <chromosome> at a time to avoid interferences beween Snakemake parallel processes accessing the same files. This issue is on a list of future improvements.
+Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
+
+
+## Specific steps
 
 
 ### ShapeIt
 
-Contig length in the vcf file header are necessary at the phasing step. You should verify this features before running analyses and annotate your vcf if necessary.
+After subsampling the population, the genotypes are phased with ShapeIt2 [[2]](#2). 
+
+Verify that contig length are annotated in the vcf file header as they are necessary at the phasing step.
+
+### Pseudodiploids
 
 
 ### LDhat
 
-Theta must be specified in the `config.yaml` file. To date, only theta = 0.01 or theta = 0.001 are allowed. The look-up table will be computed from a pre-generated one with the lkgen function of LDhat. A maximum of 100 haploid individuals is allowed (50 diploids).
+Recombination rates are estimated with `LDhat` [[3]](#3).
+
+Theta must be specified in the `config.yaml` file. The look-up table will be computed from a pre-generated one with the `lkgen` function of LDhat. A maximum of 100 haploid individuals is allowed (50 diploids). If you specify a `theta` different of 0.01 or 0.001, a complete look-up table will be computed, which require extra time. 
 
 
-### Files
+### The Large sample sub-pipeline for large numbers of SNPs
+
+
+
+
+## Input Files
 
 * <dataset>.vcf.gz, a tabix vcf file, bgzipped
 * samplelist, a one column text file with a list of individuals to keep in the original vcf
+
+
+## Output Files
+
 
 
 ## Options
@@ -94,3 +111,19 @@ Theta must be specified in the `config.yaml` file. To date, only theta = 0.01 or
 
 
 ## References
+
+<a id="1">[1]</a> 
+Raj, A., Stephens, M., & Pritchard, J. K. (2014).
+fastSTRUCTURE: variational inference of population structure in large SNP data sets.
+Genetics, 197(2), 573-589.
+
+<a id="2">[2]</a>
+Delaneau, O., Zagury, J. F., & Marchini, J. (2013).
+Improved whole-chromosome phasing for disease and population genetic studies.
+Nature methods, 10(1), 5-6.
+
+<a id="3">[3]</a>
+Auton, A., Myers, S., & McVean, G. (2014).
+Identifying recombination hotspots using population genetic data.
+arXiv preprint arXiv:1403.4264.
+
