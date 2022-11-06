@@ -73,16 +73,25 @@ At the current stage, you can run as many <dataset> as you want in parallel, as 
 Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
 
 
+A `clean.sh` bash script is available to clean a <dataset> directory from temporary files which can use a lot of disk storage (scrip still in development).
+
+
 ## Details of the main pipeline
 
 
-### ShapeIt
+### Phasing with ShapeIt
 
 After subsampling the population, the genotypes are phased with ShapeIt2 [[2]](#2). 
 
 Verify that contig length are annotated in the vcf file header as they are necessary at the phasing step.
 
-### Pseudodiploids
+### Making Pseudodiploids (for selfing species)
+
+Selfing individuals can be highly homozygotes. Thus diploid genomes are exact duplicates. If you want to sample only one phased genome for those species (one haploid genome), you can set the `pseudodiploid: 1` option, otherwise set it to `pseudodiploid: 0`.
+
+If `pseudodiploid: 1`, only one phased haploid genome per individual will be sampled and two individuals will be mixed for compatibility with `LDhat` which accepts diploid vcf only. Twice as much individuals will be sampled to gather the "pseudodiploid" vcf.
+
+For example, if `pseudodiploid: 1`, 80 individuals are sampled and only one haploid genome of each one of them are sampled to assemble a diploid vcf with 40 diploid mixed individuals, hence false diploids.
 
 
 ### LDhat
@@ -96,8 +105,15 @@ Theta must be specified in the `config.yaml` file. The look-up table will be com
 
 
 
+### LDhot
+
+Recombination hotspots are inferred from results of LDhat with LDhot [[4]]("4").
+
 
 ## Input Files
+
+
+Te input files required for the pipeline are:
 
 * <dataset>.vcf.gz, a tabix vcf file, bgzipped
 * samplelist, a one column text file with a list of individuals to keep in the original vcf
@@ -126,6 +142,11 @@ Improved whole-chromosome phasing for disease and population genetic studies.
 Nature methods, 10(1), 5-6.
 
 <a id="3">[3]</a>
+Auton, A., Myers, S., & McVean, G. (2014).
+Identifying recombination hotspots using population genetic data.
+arXiv preprint arXiv:1403.4264.
+
+<a id="4">[4]</a>
 Auton, A., Myers, S., & McVean, G. (2014).
 Identifying recombination hotspots using population genetic data.
 arXiv preprint arXiv:1403.4264.
