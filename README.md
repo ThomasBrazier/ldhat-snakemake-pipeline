@@ -1,5 +1,9 @@
 # A Snakemake pipeline to estimate LD-based recombination maps
 
+
+This pipeline is a BETA version in active development (use the `main` branch). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
+
+
 ## Installation
 
 ### Dependencies
@@ -69,7 +73,7 @@ At the current stage, you can run as many <dataset> as you want in parallel, as 
 Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
 
 
-## Specific steps
+## Details of the main pipeline
 
 
 ### ShapeIt
@@ -107,7 +111,6 @@ Theta must be specified in the `config.yaml` file. The look-up table will be com
 
 
 
-## Details
 
 
 ## References
