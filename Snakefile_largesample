@@ -366,6 +366,8 @@ rule interval:
         "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
     log:
         "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+    conda:
+        "envs/vcftools.yaml"
     shell:
         """
         iter={config[interval.iter]}
@@ -394,6 +396,8 @@ rule stat:
         "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
     log:
         "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
+    conda:
+        "envs/vcftools.yaml"
     shell:
         """
         burn={config[ldhat.burn]}

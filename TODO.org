@@ -5,7 +5,6 @@
 
 * Important improvements
 ** Make Largesample works
-** Parallellize loops in large_sample
 ** Merge Snakefile and Snakefile_largesample
 ** Estimating theta in a more robust way, pixy
 ** Script clean.sh

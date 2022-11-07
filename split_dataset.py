@@ -18,7 +18,6 @@ For example, 2,000 total SNPs, with 200 SNPs at the beginning/end shared with pr
 import sys
 import gzip
 
-#external parameters
 try:
     inputfile = sys.argv[1]
     outputfile = sys.argv[2]
@@ -28,24 +27,20 @@ except:
     print(__doc__)
     sys.exit(1)
 
-#general variables
-#OUTFILE="fileout"
-#function
 def get_overlapped_chunks(text, chunksize, overlapsize):  
     return [ lines[a:a+chunksize] for a in range(0,len(lines), chunksize-overlapsize)]
 
-lines = open(inputfile, 'r').readlines() # text as single line
+lines = open(inputfile, 'r').readlines() 
 
 chunks = get_overlapped_chunks(lines, size, overlap)
 
 length = len(chunks) 
 filenames=[f"{outputfile}/batch_{x+1}.pos" for x in range(length) ]
 
-#write output
+open(f"{outputfile}/nbatch_split","w").write(str(length))
+
 for chunk, files in zip(chunks, filenames):
     with open(files, 'w') as output:
-        #chunk = map(lambda x: x+, chunk)
         output.write("".join(chunk))
-        #output.write('\t')
 
 
