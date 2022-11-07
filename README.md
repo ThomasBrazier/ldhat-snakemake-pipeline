@@ -1,7 +1,7 @@
 # A Snakemake pipeline to estimate LD-based recombination maps
 
 
-This pipeline is a BETA version in active development (use the `main` branch). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
+This pipeline is a BETA version in active development (use the `main` branch as `dev` commonly break). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
 
 ## Installation
@@ -103,7 +103,7 @@ Theta must be specified in the `config.yaml` file. The look-up table will be com
 
 ### The Large sample sub-pipeline for large numbers of SNPs
 
-
+LDhat requires large SNP datasets but processing millions of SNPs can be computationally limiting. To circumvent this problem, you can run the pipeline with optimized steps to cut LDhat processes in chunks of thoudands of SNPs (default 2,000 SNPs overlapping by 200 SNPs). Use the option `large_sample: "yes"`.
 
 ### LDhot
 
@@ -113,7 +113,7 @@ Recombination hotspots are inferred from results of LDhat with LDhot [[4]]("4").
 ## Input Files
 
 
-Te input files required for the pipeline are:
+The input files required for the pipeline are:
 
 * <dataset>.vcf.gz, a tabix vcf file, bgzipped
 * samplelist, a one column text file with a list of individuals to keep in the original vcf
@@ -122,9 +122,9 @@ Te input files required for the pipeline are:
 ## Output Files
 
 
+Output files of LDhat and LDhot are placed in `data/<dataset>/K*.pop*/ldhat` and `data/<dataset>/K*.pop*/ldhot`. `ldhat/*.res.txt.gz` contains the recombination rates estimated between the SNP n-1 and the SNP n. `ldhot/*.hotspots.txt.gz` and `ldhot/*.hot_summary.txt.gz` contain the recombination hostpots inferred with LDhot.
 
-## Options
-
+Read the LDhat and LDhot manuals for further details on output files.
 
 
 
