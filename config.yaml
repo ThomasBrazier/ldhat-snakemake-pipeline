@@ -1,30 +1,30 @@
 workingdir: 'data/'
 cores: 4
-seed: 42
-latency-wait: 60
+seed: 42 # Random seed
+latency-wait: 60 # The time in seconds Snakemake will wait for output files after completion of a rule
+large_sample: "yes" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
 # Sample
-dataset: "Oryza_sativa_McCouch2016"
-chrom: "1"
-maf: 0.05
+dataset: "Arabidopsis_thaliana_1001genomes"
+chrom: "4" # Chromosome to sample
+maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1
-maxmissing: 0.9
-subset: 40
-# data_preprocessing
-maxk: 4
-# recombination map processing
-K: 3
-pop: 2
-mu: 1.28e-8
-theta: 0.001
-knots: 8 # Number of knots in SMC++ estimate
-shapeitWindow: 2 # Window size in Mb
-ploidy: 1
-pseudodiploid: 1
-completelk: "no"
-cut_size: 2000
-cut_overlap: 200
-bpen: 5
-interval.samp: 5000
-interval.iter: 10000000
-ldhat.burn: 200
-ldhot.nsim: 100
+maxmissing: 0.9 # The maximum proportion of missing sites allowed in vcftools is 1 - maxmissing
+subset: 40 # The random number of individuals to subset for LDhat analysis
+K: 1 # The number of clusters
+pop: 1 # The ID of the cluster given by fastSTRUCTURE
+# Data preprocessing
+maxk: 7 # Maximum number of clusters to explore in FastSTRUCTURE
+shapeitWindow: 2 # Phasing; Window size in Mb in ShapeIt2
+# Recombination map processing with LDhat
+mu: 1.28e-8 # Per-base mutation rate
+theta: 0.001 # Coalescent theta per-base
+pseudodiploid: 1 # The method to randomly resample haploid genomes (1, 2 or anything else)
+completelk: "no" # Use a complete likelihood table in LDhat (yes or no)
+cut_size: 2000 # The chunk size (number of SNPs) when large dataset are cut for LDhat
+cut_overlap: 200 # The number of SNPs overlapping each chunk
+interval.bpen: "5" # Block penalty in LDhat
+interval.samp: 5000 # MCMC sampling interval in LDhat summary
+interval.iter: 10000000 # MCMC Number fo iterations in LDhat
+ldhat.burn: 200 # MCMC burnin to discard in LDhat summary (number of iteration to discard AFTER MCMC sampling)
+# Hotspot detection
+ldhot.nsim: 100 # Number of simulations to do in LDhot for hotspot significance
