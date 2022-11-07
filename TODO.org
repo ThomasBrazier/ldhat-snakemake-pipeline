@@ -3,6 +3,20 @@
 ** Trimming -> filter chromosomes (remove scaffolds, Mt, Plt)
 
 
+* Important improvements
+** Make Largesample works
+** Merge Snakefile and Snakefile_largesample
+** Estimating theta in a more robust way, pixy
+** Script clean.sh
+
+** Filtering depth coverage/quality score
+** interval parallel iterations
+** run a list of chromosomes
+** run a list of bpen
+
+** MCMC chain convergence diagnostic
+
+
 * STRUCTURE
 
 * SMCPP

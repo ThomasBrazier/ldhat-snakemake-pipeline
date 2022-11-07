@@ -36,7 +36,7 @@ snakemake --use-conda --conda-create-envs-only
 Pre-generated look-up tables are necessary for LDhat. Make sure to download them in the working directory.
 
 ```
-wget https://github.com/auton1/LDhat/tree/master/lk_files
+wget https://github.com/auton1/LDhat/tree/master/lk_files && gunzip lk_files/*.gz
 ```
 
 
