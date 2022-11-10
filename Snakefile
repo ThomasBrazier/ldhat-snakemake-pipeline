@@ -70,6 +70,7 @@ rule sampling_pop:
     - perform HWE test on site to remove excess of heterozygotes
     - maf
     - missing data
+    - Quality score
     """
     input:
         "{wdirpop}/poplist"
@@ -82,7 +83,7 @@ rule sampling_pop:
     shell:
         """
         # Filter chromosomes and keep only bi-allelic alelles
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
 	bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf

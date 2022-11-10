@@ -8,6 +8,7 @@ chrom: "1"
 maf: 0.05
 missing: 0.1
 maxmissing: 0.9
+minQ: 40
 subset: 40
 # data_preprocessing
 maxk: 4
