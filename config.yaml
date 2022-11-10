@@ -1,11 +1,12 @@
 workingdir: 'data/'
 cores: 4
-seed: 42
-latency-wait: 60
+seed: 42 # Random seed
+latency-wait: 60 # The time in seconds Snakemake will wait for output files after completion of a rule
+large_sample: "yes" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
 # Sample
-dataset: "Oryza_sativa_McCouch2016"
-chrom: "1"
-maf: 0.05
+dataset: "Arabidopsis_thaliana_1001genomes"
+chrom: "4" # Chromosome to sample
+maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1
 maxmissing: 0.9
 minQ: 40
