@@ -253,7 +253,7 @@ rule subset_ldhat:
 #        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
 #        n=$((2*$n))
 #	 echo $n
-#        singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
+#        singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
 #	 """
 
 
@@ -277,10 +277,10 @@ rule lkgen:
 	if [ "{config[completelk]}" == "no" ]
 	then
 	echo "Runnning lkgen"
-	singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/lkgen -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /mnt/lk_files/lk_n100_t{config[theta]} -nseq $n
+	singularity exec --bind $PWD:/data ldhat.sif lkgen -prefix /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /data/lk_files/lk_n100_t{config[theta]} -nseq $n
 	else
 	echo "Generate a new look-up table"
-	singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta]} -prefix /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.
+	singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta]} -prefix /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.
 	fi
 	"""
 
@@ -368,7 +368,7 @@ if config["large_sample"] == "yes":
             #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
             for i in $(seq $nbatch)
             do
-            sem -j+0 singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             done
 	    sem --wait
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
@@ -394,7 +394,7 @@ if config["large_sample"] == "yes":
             #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
             for i in $(seq $nbatch)
             do
-            sem -j+0 singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
 	    done
 	    sem --wait
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
@@ -511,7 +511,7 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/interval -seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             """
 
     rule stat:
@@ -531,7 +531,7 @@ elif config["large_sample"] == "no":
         shell:
             """
             burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/mnt ldhat.sif /LDhat/stat -input /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
 	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
@@ -555,8 +555,8 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
+        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
+        singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
