@@ -1,7 +1,7 @@
 # A Snakemake pipeline to estimate LD-based recombination maps
 
 
-This pipeline is a BETA version in active development (use the `main` branch as `dev` commonly break). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
+This pipeline is a BETA version in active development (use the `main` branch as `dev` regularly break things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
 
 ## Installation
