@@ -83,10 +83,10 @@ rule sampling_pop:
     shell:
         """
         # Filter chromosomes and keep only bi-allelic alelles
-        if [ {config[minQ} -eq 0 ]
+        if [ {config[minQ]} -eq 0 ]
         then
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
-	elif
+	else
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdir    pop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-    alleles 2 --minQ {config[minQ]}
 	fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
