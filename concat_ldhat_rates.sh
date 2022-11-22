@@ -8,7 +8,7 @@ bpen=${4}
 
 cd $wdirpop/ldhat/${dataset}.${chromosome}/
 
-rm bpen${bpen}.rates_noheader.txt
+test -f bpen${bpen}.rates_noheader.txt && rm bpen${bpen}.rates_noheader.txt
 
 n_batch=$(ls | grep "bpen${bpen}.batch_" | grep ".rates.txt" | wc -l)
 echo $n_batch
