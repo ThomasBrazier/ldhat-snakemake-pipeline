@@ -373,7 +373,7 @@ if config["large_sample"] == "yes":
             #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
             for i in $(seq $nbatch)
             do
-            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && rm /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
             done
 	    sem --wait
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
