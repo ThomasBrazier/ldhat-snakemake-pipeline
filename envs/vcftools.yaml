@@ -8,4 +8,4 @@ dependencies:
   - samtools=1.9
   - bcftools
   - plink>=1.9
-  - parallel
+  - parallel=20220922
