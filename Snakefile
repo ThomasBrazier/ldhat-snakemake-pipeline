@@ -309,8 +309,16 @@ if config["large_sample"] == "yes":
             bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions 
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-	    parallel vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} --recode ::: $(seq $nbatch)
-	    parallel gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf ::: $(seq $nbatch)
+            for i in $(seq $nbatch); do
+            sem --jobs={config[cores]} vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            done
+            sem --wait
+            for i in $(seq $nbatch); do
+            sem --jobs={config[cores]} gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf
+            done
+            sem --wait
+  	    #parallel vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} --recode ::: $(seq $nbatch)
+	    #parallel gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf ::: $(seq $nbatch)
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
 	    """
 
@@ -334,7 +342,11 @@ if config["large_sample"] == "yes":
             """
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
             echo "nbatch = $nbatch"
-            parallel vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} ::: $(seq $nbatch)
+            for i in $(seq $nbatch); do
+            sem --jobs={config[cores]} vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            done
+            sem --wait
+            #parallel vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} ::: $(seq $nbatch)
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
