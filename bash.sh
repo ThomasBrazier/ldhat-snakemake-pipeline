@@ -47,10 +47,10 @@ test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldho
 test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldhot/*.hotspots.txt.gz && echo "LDhot hotspots exists"
 
 echo "Clean temporary files"
-bash clean.sh $dataset
+#bash clean.sh $dataset
 
 echo "Sync results back"
-rsync -avh $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
+#rsync -avh $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
 
 echo "Clean scratch"
 #rm -rf $scratchdir/${dataset}_${chrom}_${randomid}

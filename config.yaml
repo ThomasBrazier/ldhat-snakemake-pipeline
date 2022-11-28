@@ -1,5 +1,5 @@
 workingdir: 'data/'
-cores: 4
+cores: 16
 seed: 42 # Random seed
 latency-wait: 60 # The time in seconds Snakemake will wait for output files after completion of a rule
 large_sample: "yes" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes

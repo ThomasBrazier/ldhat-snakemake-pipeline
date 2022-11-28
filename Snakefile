@@ -309,19 +309,8 @@ if config["large_sample"] == "yes":
             bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions 
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls -v {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .pos | wc -l)
 	    parallel vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} --recode ::: $(seq $nbatch)
-            #for i in $(seq $nbatch)
-	    #do
-	    #sem -j+0 vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
-	    #done
-	    #sem --wait
 	    parallel gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf ::: $(seq $nbatch)
-            #for i in $(seq $nbatch)
-	    #do
-	    #sem -j+0 gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf
-	    #done
-	    #sem --wait
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
 	    """
 
@@ -344,13 +333,7 @@ if config["large_sample"] == "yes":
         shell:
             """
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .vcf.gz | wc -l)
             parallel vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} ::: $(seq $nbatch)
-            #for i in $(seq $nbatch)
-	    #do
-	    #sem -j+0 vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
-	    #done
-	    #sem --wait
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
@@ -373,13 +356,7 @@ if config["large_sample"] == "yes":
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
             parallel singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}. ::: $(seq $nbatch)
-            #for i in $(seq $nbatch)
-            #do
-            #sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && rm /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt && rm /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.type_table.txt
-            #done
-	    #sem --wait
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
             """
 
@@ -400,13 +377,7 @@ if config["large_sample"] == "yes":
             """
             burn={config[ldhat.burn]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
             parallel singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}. ::: $(seq $nbatch)
-            #for i in $(seq $nbatch)
-            #do
-            #sem -j+0 singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-	    #done
-	    #sem --wait
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
 
