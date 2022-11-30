@@ -18,7 +18,6 @@ K: 3
 pop: 2
 mu: 1.28e-8
 theta: 0.001
-knots: 8 # Number of knots in SMC++ estimate
 shapeitWindow: 2 # Window size in Mb
 ploidy: 1
 pseudodiploid: 1
