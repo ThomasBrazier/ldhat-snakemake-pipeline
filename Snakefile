@@ -312,11 +312,7 @@ if config["large_sample"] == "yes":
             for i in $(seq $nbatch); do
             vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
-            for i in $(seq $nbatch); do
-            gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf
-            done
-  	    #parallel vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} --recode ::: $(seq $nbatch)
-	    #parallel gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf ::: $(seq $nbatch)
+            gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.recode.vcf
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
 	    """
 
