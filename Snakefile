@@ -335,7 +335,7 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
             sem -j {config[cores]} --id convert.{dataset}.{chrom}.{bpen}  vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
@@ -362,7 +362,7 @@ if config["large_sample"] == "yes":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
             sem -j {config[cores]} --id interval.{dataset}.{chrom}.{bpen}  singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
@@ -387,7 +387,7 @@ if config["large_sample"] == "yes":
         shell:
             """
             burn={config[ldhat.burn]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
             sem -j {config[cores]} --id stat.{dataset}.{chrom}.{bpen} singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
