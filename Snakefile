@@ -310,7 +310,7 @@ if config["large_sample"] == "yes":
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
             for i in $(seq $nbatch); do
-            sem -j {config[cores]} vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --recode --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            sem -j {config[cores]} --id split.{dataset}.{chrom}.{bpen} vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --recode --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
             sem --wait
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.recode.vcf
@@ -338,10 +338,9 @@ if config["large_sample"] == "yes":
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
-            sem -j {config[cores]} vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            sem -j {config[cores]} --id convert.{dataset}.{chrom}.{bpen}  vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
             sem --wait
-            #parallel vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}} ::: $(seq $nbatch)
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
@@ -366,10 +365,9 @@ if config["large_sample"] == "yes":
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
-            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j {config[cores]} --id interval.{dataset}.{chrom}.{bpen}  singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             done
             sem --wait
-            #parallel singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}. && echo "batch $nbatch processed..." ::: $(seq $nbatch)
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
             """
 
@@ -392,10 +390,9 @@ if config["large_sample"] == "yes":
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
-            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j {config[cores]} --id stat.{dataset}.{chrom}.{bpen} singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
 	    done
             sem --wait
-            #parallel singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_{{#}}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_{{#}}. && echo "batch $nbatch processed..." ::: $(seq $nbatch)
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
 
@@ -422,20 +419,14 @@ if config["large_sample"] == "yes":
             cd {wdirpop}/ldhat/{dataset}.{chrom}/
             echo $PWD
             echo "First chunk"
-            n_batch=$(ls -v | grep bpen{bpen}.batch_ | grep .res.txt | wc -l)
-            echo bpen{bpen}.batch_1.res.txt
+            nbatch=$(ls -v | grep bpen{bpen}.batch_ | grep .res.txt | wc -l)
+            echo $nbatch
             cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt
-            echo "Next chunks"
-            for i in $(seq 2 $(( $n_batch-1 )))
-            do
-            echo bpen{bpen}.batch_$i.res.txt
+            for i in $(seq 2 $(( $nbatch-1 ))); do
             cat bpen{bpen}.batch_$i.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             done
-            echo bpen{bpen}.batch_$n_batch.res.txt
-            cat bpen{bpen}.batch_$n_batch.res.txt | grep -v "\-1\.00" | grep -v "Loci" | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            cat bpen{bpen}.batch_$nbatch.res.txt | grep -v "\-1\.00" | grep -v "Loci" | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             cd ../../../../..
-            echo "Add header to the new results file"
-            echo "Loci      Mean_rho        Median  L95     U95"
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"
             MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
