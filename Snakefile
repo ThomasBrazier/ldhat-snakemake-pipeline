@@ -419,7 +419,7 @@ if config["large_sample"] == "yes":
             cd {wdirpop}/ldhat/{dataset}.{chrom}/
             echo $PWD
             echo "First chunk"
-            nbatch=$(ls -v | grep bpen{bpen}.batch_ | grep .res.txt | wc -l)
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo $nbatch
             cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt
             for i in $(seq 2 $(( $nbatch-1 ))); do
