@@ -409,6 +409,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/logs/{dataset}.concatenate.{chrom}.bpen{bpen}.log"
         shell:
             """
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "Concatenate into one file"
             overlap={config[cut_overlap]}
             chunk={config[cut_size]}
@@ -419,12 +420,13 @@ if config["large_sample"] == "yes":
             cd {wdirpop}/ldhat/{dataset}.{chrom}/
             echo $PWD
             echo "First chunk"
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo $nbatch
             cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt
             for i in $(seq 2 $(( $nbatch-1 ))); do
+            echo $i
             cat bpen{bpen}.batch_$i.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             done
+            echo "End of loop on split files."
             cat bpen{bpen}.batch_$nbatch.res.txt | grep -v "\-1\.00" | grep -v "Loci" | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             cd ../../../../..
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
