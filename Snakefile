@@ -420,10 +420,10 @@ if config["large_sample"] == "yes":
             cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt
             for i in $(seq 2 $(( $nbatch-1 ))); do
             echo $i
-            cat bpen{bpen}.batch_$i.res.txt | {{ grep -v "\-1\.00" || true; }} | {{ grep -v "Loci" || true; }} | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            cat bpen{bpen}.batch_$i.res.txt | {{ grep -v "\-1\.00" || true }} | {{ grep -v "Loci" || true }} | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             done
             echo "End of loop on split files."
-            cat bpen{bpen}.batch_$nbatch.res.txt | {{ grep -v "\-1\.00" || true; }} | {{ grep -v "Loci" || true; }} | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            cat bpen{bpen}.batch_$nbatch.res.txt | {{ grep -v "\-1\.00" || true }} | {{ grep -v "Loci" || true }} | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             cd ../../../../..
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"
