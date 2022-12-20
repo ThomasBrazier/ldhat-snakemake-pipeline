@@ -535,7 +535,8 @@ rule LDhot:
     """
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
