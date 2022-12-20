@@ -448,15 +448,15 @@ if config["large_sample"] == "yes":
         input:
             expand("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt", wdirpop=wdirpop, dataset=dataset, chrom=chrom, bpen=bpen)
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         log:
-            "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.log"
+            "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.{bpen}.log"
         conda:
             "envs/vcftools.yaml"
         shell:
             """
-            vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}
+            vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
             """
 elif config["large_sample"] == "no":
     rule convert:
@@ -471,15 +471,15 @@ elif config["large_sample"] == "no":
             lookup = "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt",
             vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         log:
             "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.bpen{bpen}.log"
         conda:
             "envs/vcftools.yaml"
         shell:
             """
-            vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}
+            vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
             """
 
     rule interval:
@@ -487,8 +487,8 @@ elif config["large_sample"] == "no":
         Estimate a recombination landscape with LDhat
         """
         input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
@@ -501,7 +501,7 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             """
 
     rule stat:
@@ -521,7 +521,7 @@ elif config["large_sample"] == "no":
         shell:
             """
             burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
 	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
@@ -534,8 +534,8 @@ rule LDhot:
     LDhot
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
@@ -545,7 +545,7 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[seed]}
+        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[seed]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt

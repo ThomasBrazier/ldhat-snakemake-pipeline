@@ -29,6 +29,6 @@ interval.samp: 5000
 interval.iter: 10000000
 ldhat.burn: 200
 ldhot.nsim: 100
-ldhot.hotdist: 0.5
+ldhot.hotdist: 1
 ldhot.sig: 0.001
-ldhot.sigjoin: 0.001
+ldhot.sigjoin: 0.01

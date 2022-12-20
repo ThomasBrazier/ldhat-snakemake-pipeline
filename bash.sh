@@ -50,7 +50,7 @@ echo "Clean temporary files"
 bash clean.sh $dataset
 
 echo "Sync results back"
-rsync -avh $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
+rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
 
 echo "Clean scratch"
-rm -rf $scratchdir/${dataset}_${chrom}_${randomid}
+#rm -rf $scratchdir/${dataset}_${chrom}_${randomid}
