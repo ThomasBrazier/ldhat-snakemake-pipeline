@@ -42,7 +42,7 @@ cp -r $datadir/data/$dataset/structure $scratchdir/${dataset}_${chrom}_${randomi
 echo $ldhotseed > $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/ldhot.seed
 
 echo "Run pipeline"
-snakemake -s Snakefile -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --use-singularity --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores ldhot.seed=$ldhotseed
+snakemake -s Snakefile -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --use-singularity --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores ldhotseed=$ldhotseed
 
 echo "Check results"
 test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldhot/*.hot_summary.txt.gz && echo "LDhot summary exists"
