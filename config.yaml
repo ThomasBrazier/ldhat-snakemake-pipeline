@@ -28,6 +28,7 @@ interval.bpen: 5
 interval.samp: 5000
 interval.iter: 10000000
 ldhat.burn: 200
+ldhot.seed: 42
 ldhot.nsim: 100
 ldhot.hotdist: 1
 ldhot.sig: 0.001
