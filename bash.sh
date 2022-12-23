@@ -2,7 +2,7 @@
 #SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
 #SBATCH --mail-type=all
 #SBATCH --mem=60GB
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=4
 #SBATCH --time=25-60:00:00
 #SBATCH --job-name=LDmap
 
@@ -16,7 +16,7 @@ scratchdir=$(cat scratch.conf)
 dataset=${1}
 chrom=${2}
 randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
-ncores=16
+ncores=4
 
 # Init pipeline
 echo "Create directory ${dataset}_${chrom}_${randomid}"
