@@ -367,9 +367,11 @@ if config["large_sample"] == "yes":
             for i in $(seq $nbatch); do
             singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-	    rm {wdirpop}/ldhat/{dataset}.{chrom}/{dataset}.{chrom}.bpen{bpen}.new_lk.txt
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.locs
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.sites
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites
             rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz
             done
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
