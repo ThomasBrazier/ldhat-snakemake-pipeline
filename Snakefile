@@ -343,38 +343,13 @@ if config["large_sample"] == "yes":
             """
 
 
-    rule interval_split:
+    rule interval_stat_split:
         """
         Estimate a recombination landscape with LDhat interval
+        Remove temporary files at each iteration
         """
         input:
             "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
-        output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
-        log:
-            "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
-        conda:
-            "envs/vcftools.yaml"
-        shell:
-            """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
-            echo "nbatch = $nbatch"
-            for i in $(seq $nbatch); do
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-            done
-            echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
-            """
-
-
-    rule stat_split:
-        """
-        Compute statistics on interval
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
         log:
@@ -383,12 +358,20 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
+            iter={config[interval.iter]}
+            samp={config[interval.samp]}
+            bpen={config[interval.bpen]}
             burn={config[ldhat.burn]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-	    done
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/{dataset}.{chrom}.bpen{bpen}.new_lk.txt
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.locs
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.sites
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz
+            done
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
 
