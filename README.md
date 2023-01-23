@@ -1,7 +1,7 @@
 # A Snakemake pipeline to estimate LD-based recombination maps
 
 
-This pipeline is a BETA version in active development (use the `main` branch as `dev` commonly break). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
+This pipeline is a BETA version in active development (use the `main` branch as `dev` regularly break things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
 
 ## Installation
@@ -23,7 +23,8 @@ In addition, Singularity images are required for additional softwares. Run withi
 
 ```
 singularity pull faststructure.sif docker://tombrazier/faststructure
-singularity pull ldhat.sif docker://tombrazier/ldhat
+singularity pull ldhat.sif docker://tombrazier/ldhat:v1.0
+singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
 ```
 
 To install conda environments at the first run of the pipeline, use
@@ -79,6 +80,15 @@ A `clean.sh` bash script is available to clean a <dataset> directory from tempor
 ## Details of the main pipeline
 
 
+### Data trimming
+
+VCF trimming is done by vcftools.
+
+- maf
+- missing
+- maxmissing
+- minQ. Filter with vcftools based on a minimum Quality value per site. Set `minQ` value to 0 if your vcf does not have Quality values.
+
 ### Phasing with ShapeIt
 
 After subsampling the population, the genotypes are phased with ShapeIt2 [[2]](#2). 
@@ -110,13 +120,18 @@ LDhat requires large SNP datasets but processing millions of SNPs can be computa
 Recombination hotspots are inferred from results of LDhat with LDhot [[4]]("4").
 
 
+### Parallelisation
+
+Some steps are multithreaded with GNU parallel. Do not forget to set up the number of cores properly.
+
+
 ## Input Files
 
 
 The input files required for the pipeline are:
 
-* <dataset>.vcf.gz, a tabix vcf file, bgzipped
-* samplelist, a one column text file with a list of individuals to keep in the original vcf
+* `<dataset>.vcf.gz`, a tabix vcf file, bgzipped
+* `samplelist`, a one column text file with a list of individuals to keep from the original vcf
 
 
 ## Output Files
