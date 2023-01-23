@@ -555,8 +555,8 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
-        singularity exec --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
+        singularity exec --ncpus {cores} --bind $PWD:/mnt ldhat.sif /LDhot/ldhot --seq /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /mnt/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
+        singularity exec --ncpus {cores} --bind $PWD:/mnt ldhat.sif /LDhot/ldhot_summary --res /mnt/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /mnt/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
