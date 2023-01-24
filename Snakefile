@@ -364,7 +364,7 @@ if config["large_sample"] == "yes":
             burn={config[ldhat.burn]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
-            interval_stat () {
+            interval_stat () {{
             singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.
 	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.new_lk.txt
@@ -373,7 +373,7 @@ if config["large_sample"] == "yes":
             rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs
             rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.sites
             rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.recode.vcf.gz
-            }
+            }}
             for i in $(seq $nbatch); do
             sem -j+0 interval_stat $i
             done
