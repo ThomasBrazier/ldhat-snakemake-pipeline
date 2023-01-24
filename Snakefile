@@ -358,27 +358,25 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
-            parallel --citation
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
             burn={config[ldhat.burn]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
-            function interval_stat {{
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.
-	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.new_lk.txt
-	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.type_table.txt
-	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$1.bounds.txt
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.locs
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.ldhat.sites
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$1.recode.vcf.gz
-            }}
             for i in $(seq $nbatch); do
-            sem -j+0 interval_stat $i
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt
+	    rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz
+            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.res.txt
+            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt
+            }}
             done
-	    sem --wait
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
 
@@ -407,14 +405,14 @@ if config["large_sample"] == "yes":
             echo $PWD
             echo "First chunk"
             echo $nbatch
-            cat bpen{bpen}.batch_1.res.txt | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt
             for i in $(seq 2 $(( $nbatch-1 )))
             do
             echo $i
-            cat bpen{bpen}.batch_$i.res.txt | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             done
             echo "End of loop on split files."
-            cat bpen{bpen}.batch_$nbatch.res.txt | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
             cd ../../../../..
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"
@@ -426,7 +424,7 @@ if config["large_sample"] == "yes":
             echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
-            cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
             bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
             """
 
