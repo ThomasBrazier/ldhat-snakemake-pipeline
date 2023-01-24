@@ -16,7 +16,7 @@ scratchdir=$(cat scratch.conf)
 dataset=${1}
 chrom=${2}
 randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
-ncores=16
+ncores=4
 ldhotseed=$(echo $RANDOM)
 
 export OMP_NUM_THREADS=$ncores
@@ -52,6 +52,7 @@ test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldho
 
 echo "Clean temporary files"
 #bash clean.sh $dataset
+rm -rf $scratchdir/${dataset}_${chrom}_${randomid}/.snakemake
 
 #echo "Sync results back"
 #rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/

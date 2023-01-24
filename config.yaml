@@ -30,6 +30,6 @@ interval.iter: 10000000
 ldhat.burn: 200
 ldhot.seed: 42
 ldhot.nsim: 100
-ldhot.hotdist: 1
+ldhot.hotdist: 0.5
 ldhot.sig: 0.001
-ldhot.sigjoin: 0.01
+ldhot.sigjoin: 0.001
