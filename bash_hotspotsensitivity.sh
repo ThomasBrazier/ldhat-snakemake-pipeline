@@ -19,6 +19,8 @@ randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
 ncores=16
 ldhotseed=$(echo $RANDOM)
 
+export OMP_NUM_THREADS=$ncores
+
 # Init pipeline
 echo "Create directory ${dataset}_${chrom}_${randomid}"
 
