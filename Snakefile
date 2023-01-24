@@ -358,6 +358,7 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
+            parallel --citation
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
