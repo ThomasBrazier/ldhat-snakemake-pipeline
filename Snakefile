@@ -375,7 +375,6 @@ if config["large_sample"] == "yes":
             rm {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.res.txt
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt
-            }}
             done
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
