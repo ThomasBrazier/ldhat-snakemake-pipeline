@@ -243,24 +243,6 @@ rule subset_ldhat:
 	bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
-#rule complete:
-#    """
-#    Generate a complete look-up table
-#    """
-#    input:
-#        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
-#    output:
-#        "{wdirpop}/ldhat/{dataset}.lookup.{chrom}"
-#    log:
-#        "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
-#    shell:
-#        """
-#        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-#        n=$((2*$n))
-#	 echo $n
-#        singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
-#	 """
-
 
 rule lkgen:
     """
@@ -365,12 +347,12 @@ if config["large_sample"] == "yes":
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
-            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             done
             sem --wait
             for i in $(seq $nbatch); do
-            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
-            rm /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz"
+            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz"
             done
             sem --wait
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
@@ -403,14 +385,14 @@ if config["large_sample"] == "yes":
             echo $PWD
             echo "First chunk"
             echo $nbatch
-            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt || true
             for i in $(seq 2 $(( $nbatch-1 )))
             do
             echo $i
-            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
             done
             echo "End of loop on split files."
-            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
             cd ../../../../..
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"

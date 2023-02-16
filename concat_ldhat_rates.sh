@@ -15,8 +15,8 @@ echo $n_batch
 
 for f in $(seq 1 $(( $n_batch )))
 do
-  echo "Processing bpen${bpen}.batch_${f}.rates.txt file..."
-  tail -n +2 bpen${bpen}.batch_${f}.rates.txt >> bpen${bpen}.rates_noheader.txt
+  echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
+  zcat bpen${bpen}.batch_${f}.rates.txt | tail -n +2 >> bpen${bpen}.rates_noheader.txt
 done
 n_snps=$(cat bpen${bpen}.rates_noheader.txt | wc -l)
 echo "$n_snps	$n_snps" > bpen${bpen}.rates.txt
