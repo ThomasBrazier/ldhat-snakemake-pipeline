@@ -37,9 +37,9 @@ if (dataset == "") {
 }
 
 # dataset = "Arabidopsis_thaliana_1001genomes" # DEBUG ONLY
-wdirpop = list.dirs(path = paste("data/", dataset, sep = ""))
-wdirpop = wdirpop[grepl("K", wdirpop)]
-vcf_file = paste(wdirpop, "/", dataset, ".pop.vcf.gz", sep = "")
+# wdirpop = list.dirs(path = paste("data/", dataset, sep = ""))
+# wdirpop = wdirpop[grepl("K", wdirpop)]
+vcf_file = paste("data/", dataset, "/K1.pop1/", dataset, ".pop.vcf.gz", sep = "")
 cat("Processing dataset", dataset, "\n")
 # Read the vcf
 vcf = read.vcfR(vcf_file, verbose = FALSE)
