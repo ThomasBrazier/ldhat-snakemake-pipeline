@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Estimate theta on a vcf file
+# Testing convergence of the MCMC chains
 
 args = commandArgs(trailingOnly=TRUE)
 
