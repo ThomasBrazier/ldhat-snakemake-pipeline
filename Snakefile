@@ -83,7 +83,12 @@ rule sampling_pop:
     shell:
         """
         # Filter chromosomes and keep only bi-allelic alelles
+        if [ {config[minQ]} -eq 0 ]
+        then
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+	else
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
+	fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
 	bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
@@ -155,7 +160,7 @@ rule phasing_vcf:
     shell:
         """
 	    # Remove --thread {config[cores]} if causing errors
-        shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --thread 1 --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
+        shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --thread {config[cores]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length
         zcat {wdir}/{dataset}.vcf.gz | grep '^#' > {wdirpop}/newheader
@@ -232,29 +237,11 @@ rule subset_ldhat:
         "envs/vcftools.yaml"
     shell:
         """
-	RANDOM=42
+	RANDOM={config[seed]}
 	vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
 	bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
-
-#rule complete:
-#    """
-#    Generate a complete look-up table
-#    """
-#    input:
-#        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
-#    output:
-#        "{wdirpop}/ldhat/{dataset}.lookup.{chrom}"
-#    log:
-#        "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
-#    shell:
-#        """
-#        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-#        n=$((2*$n))
-#	 echo $n
-#        singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta} -prefix {wdirpop}/ldhat/{dataset}.lookup.{chrom}
-#	 """
 
 
 rule lkgen:
@@ -304,17 +291,10 @@ if config["large_sample"] == "yes":
             bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions 
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls -v {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .pos | wc -l)
-	    for i in $(seq $nbatch)
-	    do
-	    sem -j+0 vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i --recode
-	    done
-	    sem --wait
-	    for i in $(seq $nbatch)
-	    do
-	    sem -j+0 gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf
-	    done
-	    sem --wait
+            for i in $(seq $nbatch); do
+            vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --positions {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.pos --recode --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            done
+            gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.recode.vcf
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
 	    """
 
@@ -327,7 +307,7 @@ if config["large_sample"] == "yes":
         These options output data in LDhat format. This option requires the "--chr" filter option to also be used. The first option outputs phased data only, and therefore also implies "--phased" be used, leading to unphased individuals and genotypes being excluded. The second option treats all of the data as unphased, and therefore outputs LDhat files in genotype/unphased format. Two output files are generated with the suffixes ".ldhat.sites" and ".ldhat.locs", which correspond to the LDhat "sites" and "locs" input files respectively.
         """
         input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch",
+            "{wdirpop}/ldhat/{dataset}.{chrom}/nbatch"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
         log:
@@ -336,51 +316,22 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .vcf.gz | wc -l)
-            for i in $(seq $nbatch)
-	    do
-	    sem -j+0 vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
-	    done
-	    sem --wait
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+            echo "nbatch = $nbatch"
+            for i in $(seq $nbatch); do
+            vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            done
 	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
 
-    rule interval_split:
+    rule interval_stat_split:
         """
         Estimate a recombination landscape with LDhat interval
+        Remove temporary files at each iteration
         """
         input:
             "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
-        output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
-        log:
-            "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
-        conda:
-            "envs/vcftools.yaml"
-        shell:
-            """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
-            for i in $(seq $nbatch)
-            do
-            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-            done
-	    sem --wait
-            echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done
-            """
-
-
-    rule stat_split:
-        """
-        Compute statistics on interval
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/interval_bpen{bpen}.done"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
         log:
@@ -389,15 +340,24 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
+            iter={config[interval.iter]}
+            samp={config[interval.samp]}
+            bpen={config[interval.bpen]}
             burn={config[ldhat.burn]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
-            #nbatch=$(ls {wdirpop}/ldhat/{dataset}.{chrom}/ | grep batch | grep .ldhat.sites | wc -l)
-            for i in $(seq $nbatch)
-            do
-            sem -j+0 singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-	    done
-	    sem --wait
-	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+            echo "nbatch = $nbatch"
+            for i in $(seq $nbatch); do
+            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            done
+            sem --wait
+            for i in $(seq $nbatch); do
+            sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
+            rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz"
+            done
+            sem --wait
+            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
+            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
+            echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
             """
 
 
@@ -413,6 +373,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/logs/{dataset}.concatenate.{chrom}.bpen{bpen}.log"
         shell:
             """
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "Concatenate into one file"
             overlap={config[cut_overlap]}
             chunk={config[cut_size]}
@@ -423,20 +384,16 @@ if config["large_sample"] == "yes":
             cd {wdirpop}/ldhat/{dataset}.{chrom}/
             echo $PWD
             echo "First chunk"
-            n_batch=$(ls -v | grep bpen{bpen}.batch_ | grep .res.txt | wc -l)
-            echo bpen{bpen}.batch_1.res.txt
-            cat bpen{bpen}.batch_1.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk > bpen{bpen}.res_noheader.txt
-            echo "Next chunks"
-            for i in $(seq 2 $(( $n_batch-1 )))
+            echo $nbatch
+            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt || true
+            for i in $(seq 2 $(( $nbatch-1 )))
             do
-            echo bpen{bpen}.batch_$i.res.txt
-            cat bpen{bpen}.batch_$i.res.txt | grep -v "\-1\.00" | grep -v "Loci" | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            echo $i
+            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
             done
-            echo bpen{bpen}.batch_$n_batch.res.txt
-            cat bpen{bpen}.batch_$n_batch.res.txt | grep -v "\-1\.00" | grep -v "Loci" | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt
+            echo "End of loop on split files."
+            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
             cd ../../../../..
-            echo "Add header to the new results file"
-            echo "Loci      Mean_rho        Median  L95     U95"
             echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"
             MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
@@ -447,7 +404,8 @@ if config["large_sample"] == "yes":
             echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
-            cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+            bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
             """
 
 
@@ -458,15 +416,15 @@ if config["large_sample"] == "yes":
         input:
             expand("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt", wdirpop=wdirpop, dataset=dataset, chrom=chrom, bpen=bpen)
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         log:
-            "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.log"
+            "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.{bpen}.log"
         conda:
             "envs/vcftools.yaml"
         shell:
             """
-            vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}
+            vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
             """
 elif config["large_sample"] == "no":
     rule convert:
@@ -481,15 +439,15 @@ elif config["large_sample"] == "no":
             lookup = "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt",
             vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         log:
             "{wdirpop}/logs/{dataset}.ldhatconvert.{chrom}.bpen{bpen}.log"
         conda:
             "envs/vcftools.yaml"
         shell:
             """
-            vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}
+            vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
             """
 
     rule interval:
@@ -497,8 +455,8 @@ elif config["large_sample"] == "no":
         Estimate a recombination landscape with LDhat
         """
         input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
@@ -511,7 +469,7 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             """
 
     rule stat:
@@ -531,7 +489,7 @@ elif config["large_sample"] == "no":
         shell:
             """
             burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{config[bpen]}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
 	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
@@ -544,8 +502,9 @@ rule LDhot:
     LDhot
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
@@ -555,8 +514,8 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
-        singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}
+        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]}
+        singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt

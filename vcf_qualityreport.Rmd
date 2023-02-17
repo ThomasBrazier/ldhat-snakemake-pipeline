@@ -20,7 +20,7 @@ require(poppr)
 
 ## Automatic VCF quality report
 
-This document is a file automatically computed from a VCF candidate dataset. It will help choosing dataset of sufficient quality for further analyses in polymorphism and LDhat pipelines.
+This document is a file automatically computed from a VCF candidate population dataset. It will help i the assessment of a dataset of sufficient quality for further analyses in polymorphism and LDhat pipelines.
 
 
 ```{r data, echo = TRUE}
@@ -36,8 +36,10 @@ if (dataset == "") {
  stop("<dataset> must be passed in argument", call.=FALSE)
 }
 
-# dataset = "Oryza_sativa_McCouch2016" # DEBUG ONLY
-vcf_file = paste("data/", dataset, "/", dataset, ".vcf.gz", sep = "")
+# dataset = "Arabidopsis_thaliana_1001genomes" # DEBUG ONLY
+wdirpop = list.dirs(path = paste("data/", dataset, sep = ""))
+wdirpop = wdirpop[grepl("K", wdirpop)]
+vcf_file = paste(wdirpop, "/", dataset, ".pop.vcf.gz", sep = "")
 cat("Processing dataset", dataset, "\n")
 # Read the vcf
 vcf = read.vcfR(vcf_file, verbose = FALSE)
@@ -214,4 +216,6 @@ for (chr in list_chr) {
   head(chrom@win.info)
 }
 ```
+
+
 

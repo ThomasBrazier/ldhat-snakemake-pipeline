@@ -2,7 +2,7 @@
 #SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
 #SBATCH --mail-type=all
 #SBATCH --mem=60GB
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=16
 #SBATCH --time=25-60:00:00
 #SBATCH --job-name=LDmap
 
@@ -17,6 +17,7 @@ dataset=${1}
 chrom=${2}
 randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
 ncores=4
+ldhotseed=$(echo $RANDOM)
 
 export OMP_NUM_THREADS=$ncores
 
@@ -40,19 +41,21 @@ mkdir $scratchdir/${dataset}_${chrom}_${randomid}/data
 mkdir $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}
 cp $datadir/data/$dataset/* $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/
 cp -r $datadir/data/$dataset/structure $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/
+echo $ldhotseed > $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/ldhot.seed
 
 echo "Run pipeline"
-snakemake -s Snakefile -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --use-singularity --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores
+snakemake -s Snakefile -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --use-singularity --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores ldhotseed=$ldhotseed
 
 echo "Check results"
 test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldhot/*.hot_summary.txt.gz && echo "LDhot summary exists"
 test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldhot/*.hotspots.txt.gz && echo "LDhot hotspots exists"
 
 echo "Clean temporary files"
-bash clean.sh $dataset
+#bash clean.sh $dataset
+rm -rf $scratchdir/${dataset}_${chrom}_${randomid}/.snakemake
 
-echo "Sync results back"
-rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
+#echo "Sync results back"
+#rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
 
-echo "Clean scratch"
+#echo "Clean scratch"
 #rm -rf $scratchdir/${dataset}_${chrom}_${randomid}

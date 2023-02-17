@@ -1,38 +1,24 @@
 * Data
 ** Add a validation step for data format (e.g. vcf header, contig length...)
-** Trimming -> filter chromosomes (remove scaffolds, Mt, Plt)
 
 
 * Important improvements
-** Make Largesample works
-** Merge Snakefile and Snakefile_largesample
-** Estimating theta in a more robust way, pixy
+** DONE Make Largesample works
+** DONE Merge Snakefile and Snakefile_largesample
+** Estimating theta in a more robust way, e.g. pixy
 ** Script clean.sh
-
-** Filtering depth coverage/quality score
-** interval parallel iterations
-** run a list of chromosomes
-** run a list of bpen
-
+** DONE Filtering depth coverage/quality score
+** DONE interval parallel iterations
 ** MCMC chain convergence diagnostic
 
 
 * STRUCTURE
-
-* SMCPP
-** "smcpp.commands.vcf2smc WARNING Neither missing cutoff (-c) or mask (-m) has been specified. This means that stretches of the chromosome that do not have any VCF entries (for example, centromeres) will be interpreted as homozygous recessive"
-** Take care of Runs of Homozygosity - Make pseudodiploids before SCM++ ???
-** Problem with iterate.dat, which is stored in home/ (conflict when smcpp is run in different slurm jobs)
-** Diagnostic "A useful diagnostic for understanding the final output of SMC++ are the sequence of intermediate estimates .model.iter<k>.json which are saved by --estimate in the --output directory. By plotting these, you can get a sense of whether the optimizer is overfitting and requires additional regularization."
 
 
 * Multiprocessing
 ** Process more than one chromosome
 ** Process more than one interval bpen
 
-
-* subset LDhat
-** Set seed for vcftools
 
 * Config
 ** DONE One config file per dataset, in the data data directory
