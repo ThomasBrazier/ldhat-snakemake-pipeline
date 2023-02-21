@@ -1,0 +1,175 @@
+---
+title: "LDHat MCMC convergence assessment"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  wdirpop: ""
+  dataset: ""
+  chromosome: ""
+  bpen: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE}
+require(rmarkdown)
+require(vcfR)
+require(adegenet)
+require(poppr)
+library(ggplot2)
+library(ggpubr)
+library(yaml)
+# library(MCMCglmm)
+# library(coda)
+```
+
+```{r, echo = FALSE}
+wdirpop = params$wdirpop
+dataset = params$dataset
+chromosome = params$chromosome
+bpen = params$bpen
+```
+
+
+```{r, echo=TRUE}
+cat("Dataset:", dataset, "\n")
+cat("Chromosome:", chromosome, "\n")
+
+yaml_config = read_yaml(paste0("data/", dataset, "/config.yaml"))
+burnin = yaml_config$ldhat.burn
+sampling = yaml_config$interval.samp
+iterations = yaml_config$interval.iter
+
+cat("Burnin:", burnin,"\n",
+    "Sampling every", sampling,"iterations\n",
+    "Total iterations of the chain:", iterations,"\n")
+```
+
+This document is a file automatically computed to assess LDhat MCMC chain convergence from multiple iterations of LDhat on a single dataset (different random seeds).
+
+
+
+## Convergence of a single chain (the one used for estimates)
+
+
+
+```{r data, echo = TRUE}
+cat("Loading MCMC sampling chain.\n")
+mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
+# mcmc.file = "data/Arabidopsis_thaliana_1001genomes.1.bpen15.rates.txt.gz"
+mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
+# One line per position
+# Each column is a MCMC iteration
+# Do the mean of each column (minus first one) and check if mean posterior is stable across iterations
+mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
+                            posone = as.numeric(mcmc.chain[1,-1]),
+                            pos1000 = as.numeric(mcmc.chain[1000,-1]),
+                            posterior = apply(mcmc.chain[,-1], 2, median),
+                            totalgenetic = apply(mcmc.chain[,-1], 2, sum))
+
+require(ggplot2)
+require(ggpubr)
+# Median of all positions
+p1 = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
+  geom_line() +
+  xlab("Sample") + ylab("Median posterior")
+p1b = ggplot(mean.posterior, aes(x = posterior)) +
+  geom_density() +
+  xlab("Median posterior")
+# One position
+p2 = ggplot(mean.posterior, aes(x = iteration, y = posone)) +
+  geom_line() +
+  xlab("Sample") + ylab("Posterior position one")
+p2b = ggplot(mean.posterior, aes(x = posone)) +
+  geom_density() +
+  xlab("Posterior position one")
+
+
+# ggplot(mean.posterior, aes(x = iteration, y = pos1000)) +
+#   geom_line()
+
+# Total genetic distance ~ sample (iteration)
+p3 = ggplot(mean.posterior, aes(x = iteration, y = totalgenetic)) +
+  geom_line() +
+  xlab("Sample") + ylab("Total genetic distance")
+p3b = ggplot(mean.posterior, aes(x = totalgenetic)) +
+  geom_density() +
+  xlab("Total genetic distance")
+
+
+p = ggarrange(p1, p1b, p2, p2b, p3, p3b, nrow = 3, ncol = 2)
+ggsave(paste(wdirpop, "/mcmc/", set, ".", chromosome, ".bpen", bpen, ".jpeg", sep = ""),
+       plot = p, device = jpeg(), width = 14, height = 12, dpi = 300)
+```
+
+
+```{r, echo=FALSE}
+# Summary by LDhat built-in functions
+# HEAVY Computations -> Server side to produce diagnostic figures
+source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
+locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".", bpen, ".ldhat.locs", sep = "")
+
+summary = summarise.interval(rates.file = gzfile(mcmc.file),
+                            burn.in = 200, locs.file = locs.file)
+saveRDS(summary, file = paste(wdirpop, "/mcmc/", dataset, ".", chromosome, ".", bpen, ".MCMCsummary.Rds", sep = ""))
+```
+
+
+
+```{r, echo=TRUE}
+summary
+```
+
+
+# Convergence over multiple runs (10 runs in 'mcmc')
+
+
+## Compare traceplots of individual chains
+
+## Correlation between chains
+
+## Geweke diagnostic of MCMC Chain stability
+
+```{r, echo=FALSE}
+#========================================================================#
+# Geweke Diagnostic of MC Chain Stability
+#------------------------------------------------------------------------#
+# if the whole chain is stationary, the means of the values early and late in the sequence should be similar
+# convergence diagnostic 'Z' is the difference between the 2 means divided by the asymptotic standard error of their difference
+# values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence
+# can also estimate p-value of 'Z' from the normal distribution
+# yields the probability that the divided chain means are different
+# ?geweke.diag
+# ?geweke.plot
+```
+
+
+## Heidelberger and Welch's Convergence Diagnostic
+
+```{r, echo=FALSE}
+#========================================================================#
+# Heidelberger and Welch's Convergence Diagnostic
+#------------------------------------------------------------------------#
+# probability of rejecting hypothesis that Markov Chain is a stable/stationary distribution
+# if Halfwidth test fails, chain should be extended
+# ?heidel.diag
+```
+
+
+## Gelman diagnostic for testing convergence among chains
+
+
+```{r, echo=FALSE}
+#========================================================================#
+# Gelman diagnostic: 'potential scale reduction factor'
+#------------------------------------------------------------------------#
+# ?gelman.diag
+#------------------------------------------------------------------------#
+# Alphas
+#------------------------------------------------------------------------#
+# testing convergence among chains
+#!# scaling factor should be less than 1.2
+# values substantially greater than 1 indicate lack of convergence
+```
