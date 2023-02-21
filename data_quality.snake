@@ -40,4 +40,3 @@ rule Rmd_report:
 	Rscript vcf_qualityreport.R {dataset}
 	mv vcf_qualityreport.html {wdir}/{dataset}.quality.html
         """
-

@@ -73,14 +73,14 @@ rule interval:
      Compute statistics on interval
      """
      input:
-        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.new_lk.txt",
-        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt",
-        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt"
+         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.new_lk.txt",
+         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt",
+         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt"
     output:
         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.res.txt",
 	    "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt.gz",
         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt.gz"
-   shell:
+     shell:
         """
         burn={config[ldhat.burn]}
         singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}
