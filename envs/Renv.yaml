@@ -2,6 +2,7 @@ name: Renv
 channels:
   - conda-forge
   - bioconda
+  - r
 dependencies:
   - r-base
   - r-rmarkdown
@@ -10,3 +11,4 @@ dependencies:
   - r-vcfr
   - r-poppr
   - r-ggpubr
+  - r-yaml
