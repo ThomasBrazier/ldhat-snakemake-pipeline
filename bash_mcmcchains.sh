@@ -8,7 +8,6 @@
 
 # Load env
 . /local/env/envsnakemake-6.0.5.sh
-. /local/env/envsingularity-3.8.5.sh
 . /local/env/envconda.sh
 
 dataset=${1}

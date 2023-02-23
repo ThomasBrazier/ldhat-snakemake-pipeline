@@ -20,7 +20,7 @@ wdirMCMC=config["workingdir"] + dataset + "/K" + K + ".pop" + pop + "/MCMC"
 
 nruns=10
 
- wildcard_constraints:
+wildcard_constraints:
      wdir=wdir,
      wdirpop=wdirpop,
      wdirMCMC=wdirMCMC,
@@ -47,13 +47,13 @@ rule interval:
     Estimate a recombination landscape with LDhat
     """
     input:
-        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+        expand("{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites", wdirpop=wdirpop, dataset=dataset, chrom=chrom),
+        expand("{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs", wdirpop=wdirpop, dataset=dataset, chrom=chrom)
     output:
-        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.new_lk.txt", nruns=nruns),
-        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.bounds.txt", nruns=nruns),
-        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt", nruns=nruns),
-        temporary(expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.type_table.txt", nruns=nruns))
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.new_lk.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.bounds.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+        temporary(expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.type_table.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns))
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -63,43 +63,44 @@ rule interval:
         bpen={config[interval.bpen]}
         for i in {{1..{nruns}}}
         do
-        sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.$i
+        sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.$i.
         done
         sem --wait
         """
 
- rule stat:
-     """
-     Compute statistics on interval
-     """
-     input:
-         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.new_lk.txt",
-         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt",
-         "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt"
-    output:
-        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.res.txt",
-	    "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt.gz",
-        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt.gz"
-     shell:
-        """
-        burn={config[ldhat.burn]}
-        singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}
-	    gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt
-        gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.bounds.txt
-	    """
+rule stat:
+   """
+   Compute statistics on interval
+   """
+   input:
+       "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.new_lk.txt",
+       "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt",
+       "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt"
+   output:
+      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.res.txt",
+      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt.gz",
+      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt.gz"
+   shell:
+      """
+      burn={config[ldhat.burn]}
+      singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.
+      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt
+      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.bounds.txt
+      """
 
 rule MCMC_report:
     """
     Produce a Rmarkdown/pdf report
     """
     input:
-        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.res.txt", nruns=nruns)
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.res.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
     output:
         "{wdir}/{dataset}.ldhat_MCMC.html"
     conda:
         "envs/Renv.yaml"
     shell:
         """
-	    Rscript ldhat_MCMC.R {wdirpop} {dataset} {chromosome} {bpen}
-	    mv ldhat_MCMC.html {wdir}/{dataset}.ldhat_MCMC.html
+        mkdir {wdirpop}/mcmc
+        Rscript ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
+	mv ldhat_MCMC.html {wdir}/{dataset}.ldhat_MCMC.html
         """
