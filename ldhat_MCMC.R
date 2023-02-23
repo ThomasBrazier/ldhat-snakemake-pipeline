@@ -19,4 +19,4 @@ rmarkdown::render('ldhat_MCMC.Rmd',
                   params = list(wdirpop = wdirpop,
                                 dataset = dataset,
                                 chromosome = chromosome,
-                                bepn = bpen))
+                                bpen = bpen))
