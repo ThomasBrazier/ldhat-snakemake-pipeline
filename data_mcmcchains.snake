@@ -37,7 +37,7 @@ rule all:
     One ring to rule them all
     """
     input:
-        expand("{wdir}/{dataset}.ldhat_MCMC.html", wdir=wdir, dataset=dataset)
+        expand("{wdirMCMC}/{dataset}.ldhat_MCMC.html", wdirMCMC=wdirMCMC, dataset=dataset)
     shell:
         "echo 'MCMC convergence assessment: finished'"
 
@@ -100,7 +100,6 @@ rule MCMC_report:
         "envs/Renv.yaml"
     shell:
         """
-        mkdir {wdirpop}/mcmc
         Rscript ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
-	mv ldhat_MCMC.html {wdir}/{dataset}.ldhat_MCMC.html
+	mv ldhat_MCMC.html {wdirMCMC}/{dataset}.ldhat_MCMC.html
         """
