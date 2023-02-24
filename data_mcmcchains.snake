@@ -95,7 +95,7 @@ rule MCMC_report:
     input:
         expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.res.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
     output:
-        "{wdir}/{dataset}.ldhat_MCMC.html"
+        "{wdirMCMC}/{dataset}.ldhat_MCMC.html"
     conda:
         "envs/Renv.yaml"
     shell:
