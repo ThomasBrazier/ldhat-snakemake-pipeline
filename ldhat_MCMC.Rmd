@@ -69,6 +69,8 @@ This document is a file automatically computed to assess LDhat MCMC chain conver
 
 ## Convergence of a single chain (the one used for estimates)
 
+There is one MCMC estimate for each interval between SNPs, at each iteration (parallel chains for each interval).
+Hence it is important to assess convergence within intervals by mixing posterior rates in intervals and between intervals by mixing the total map length (total map length should be stationary).
 
 
 ```{r mcmcChain, data, echo = FALSE}
@@ -121,7 +123,7 @@ ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".singl
 rm(mcmc.chain)
 ```
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 5, fig.width = 9, fig.align="center", fig.cap = "Sampling chains and posterior distributions of the chians used to estimate Rho."}
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Sampling chains and posterior distributions of the chians used to estimate Rho."}
 plot(p)
 ```
 
@@ -133,10 +135,6 @@ plot(p)
 # Summary by LDhat built-in functions
 # HEAVY Computations -> Server side to produce diagnostic figures
 source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
-# summary = summarise.interval(rates.file = gzfile(mcmc.file),
-#                             burn.in = burnin, locs.file = locs.file,
-#                             single.plot = TRUE, ld.plot = FALSE, new.plot = FALSE)
-# saveRDS(summary, file = paste(wdirpop, "/mcmc/", dataset, ".", chromosome, ".", bpen, ".MCMCsummary.Rds", sep = ""))
 ```
 
 
@@ -231,12 +229,18 @@ saveRDS(figures, file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".", 
 ```
 
 
+MCMC rates for each interval are mixed. Each line of panel B is the chain of a single interval. If there is convergence, all single interval chains should be stationary (no value/color fluctuation).
+
+
 ```{r plotFig1, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Mixing rates of the sampling chain."}
 plot(figures[[1]])
 ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""),
        plot = figures[[1]], device = jpeg(), width = 14, height = 8, dpi = 300)
 ```
 
+
+
+The mean posterior rate is the mean rate at each SNP position among all iterations of the sampling chain. If the sampling chain is stationary, the mean rate should be similar to the estimated recombination landscape.
 
 ```{r plotFig2, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Posterior rates of the sampling chain."}
 plot(figures[[2]])
@@ -245,10 +249,82 @@ ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".poste
 ```
 
 
-# Convergence over multiple runs (10 runs in 'mcmc')
+```{r plotLandscape, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Estimated recombination landscape."}
+res.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt.gz", sep = "")
+res = read.table(gzfile(res.file), header = F, skip = 2)
+colnames(res) = c("loci", "mean_rho", "median_rho", "lower", "upper")
+res$loci = res$loci/10
+
+landscape = ggplot(df, aes(x = loci, y = mean_rho)) +
+  geom_line() +
+  xlab("Genomic position (Mb)") + ylab("Mean recombination rate")
+
+plot(landscape)
+```
+
+
+
+# Convergence over independent runs (10 runs in 'mcmc')
+
+Strangely, LDhat does not require a random seed. I compared ten independent runs computed on the exact same data (population, individuals and markers), just launched ten times with LDhat.
 
 
 ## Compare traceplots of individual chains
+
+Cpmpare the ten traceplots of independent runs.
+
+
+```{r mcmcChain, data, echo = FALSE}
+cat("Plotting ten independent MCMC sampling chains.\n")
+
+plots = list()
+
+for (i in 1:10) {
+  mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
+  mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
+  mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
+                              posone = as.numeric(mcmc.chain[1,-1]),
+                              pos1000 = as.numeric(mcmc.chain[1000,-1]),
+                              posterior = apply(mcmc.chain[,-1], 2, mean),
+                              totalgenetic = apply(mcmc.chain[,-1], 2, sum))
+  
+  p = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
+  geom_line() +
+  xlab("Sample") + ylab("Mean posterior") +
+  ggtitle(paste("Run #", i, sep = ""))
+  plots[[i]] = p
+  rm(mcmc.chain)
+}
+
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Mean posterior rates of ten independent MCMC runs."}
+for (i in 1:10) {
+  plot(plots[[i]])
+}
+
+rm(plots)
+```
+
+
+
+MCMC chains are data-intensive (in practice there is one chain per SNP interval). To do it in a reasonable time, I reduced the data to a subset of 10,000 random intervals for each run (shape of the matrix 2,000 sampling x 10,000 intervals for each run).
+
+
+
+```{r subsetChains, echo=FALSE}
+runs = list()
+
+for (i in 1:10) {
+  mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
+  mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
+  mcmc.chain = mcmc.chain[,10000]
+  list[[i]] = mcmc.chain
+  rm(mcmc.chain)
+}
+```
+
+
 
 ## Correlation between chains
 
@@ -263,21 +339,34 @@ ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".poste
 # values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence
 # can also estimate p-value of 'Z' from the normal distribution
 # yields the probability that the divided chain means are different
-# ?geweke.diag
-# ?geweke.plot
 ```
 
 
-## Heidelberger and Welch's Convergence Diagnostic
-
-```{r, echo=FALSE}
-#========================================================================#
-# Heidelberger and Welch's Convergence Diagnostic
-#------------------------------------------------------------------------#
-# probability of rejecting hypothesis that Markov Chain is a stable/stationary distribution
-# if Halfwidth test fails, chain should be extended
-# ?heidel.diag
+```{r, echo-TRUE}
+?geweke.diag
+?geweke.plot
 ```
+
+
+If the whole chain is stationary, the means of the values early and late in the sequence should be similar. The convergence diagnostic 'Z' is the difference between the two means divided by the asymptotic standard error of their difference.
+Values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence. We can also estimate p-value of 'Z' from the normal distribution which yield the probability that the divided chain means are different.
+
+Distribution of Geweke diagnostic values 'Z' computed for convergence in each interval single chain (10,000 values).
+(A) Density
+(B) Map of 'Z' along 10,000 SNPs
+
+
+
+<!-- ## Heidelberger and Welch's Convergence Diagnostic -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- #========================================================================# -->
+<!-- # Heidelberger and Welch's Convergence Diagnostic -->
+<!-- #------------------------------------------------------------------------# -->
+<!-- # probability of rejecting hypothesis that Markov Chain is a stable/stationary distribution -->
+<!-- # if Halfwidth test fails, chain should be extended -->
+<!-- # ?heidel.diag -->
+<!-- ``` -->
 
 
 ## Gelman diagnostic for testing convergence among chains
@@ -295,3 +384,21 @@ ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".poste
 #!# scaling factor should be less than 1.2
 # values substantially greater than 1 indicate lack of convergence
 ```
+
+
+```{r, echo=TRUE}
+?gelman.diag
+```
+
+
+The Gelman diagnostic is testing for convergence among independent chains. The scaling factor computed here should less than 1.2. Values substantially greater than one indicate a lack of convergennce.
+
+
+Distribution of the Gelman scaling factor computed for each interval single chain (10,000 values).
+(A) Density
+(B) Map of 'scaling factor' along 10,000 SNPs
+
+
+
+
+
