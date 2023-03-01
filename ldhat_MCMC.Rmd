@@ -319,7 +319,7 @@ for (i in 1:10) {
   mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
   mcmc.chain = mcmc.chain[,10000]
-  list[[i]] = mcmc.chain
+  runs[[i]] = as.mcmc(mcmc.chain)
   rm(mcmc.chain)
 }
 ```
@@ -354,6 +354,8 @@ Values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence
 Distribution of Geweke diagnostic values 'Z' computed for convergence in each interval single chain (10,000 values).
 (A) Density
 (B) Map of 'Z' along 10,000 SNPs
+
+
 
 
 
