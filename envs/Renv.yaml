@@ -12,3 +12,4 @@ dependencies:
   - r-poppr
   - r-ggpubr
   - r-yaml
+  - r-coda
