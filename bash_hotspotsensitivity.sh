@@ -16,7 +16,7 @@ scratchdir=$(cat scratch.conf)
 dataset=${1}
 chrom=${2}
 randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
-ncores=4
+ncores=16
 ldhotseed=$(echo $RANDOM)
 
 export OMP_NUM_THREADS=$ncores

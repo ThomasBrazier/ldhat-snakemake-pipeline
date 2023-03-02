@@ -13,7 +13,7 @@ chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' datas
 K=str(config["K"])
 pop=str(config["pop"])
 bpen=config["interval.bpen"]
-ncores=config["cores"]
+ncores=int(config["cores"])
 
 wdir=config["workingdir"] + dataset
 wdirpop=config["workingdir"] + dataset + "/K" + K + ".pop" + pop
