@@ -322,16 +322,42 @@ rm(plots)
 
 
 ```{r, echo=FALSE}
-posterior$ru = as.factor(posterior$run)
+x = posterior$mean.posterior
+groups = as.factor(posterior$run)
 
-cormat = round(cor(mydata, method = "Spearman"),2)
+series = data.frame(run.1 = x[which(groups == "1")],
+                    run.2 = x[which(groups == "2")],
+                    run.3 = x[which(groups == "3")],
+                    run.4 = x[which(groups == "4")],
+                    run.5 = x[which(groups == "5")],
+                    run.6 = x[which(groups == "6")],
+                    run.7 = x[which(groups == "7")],
+                    run.8 = x[which(groups == "8")],
+                    run.9 = x[which(groups == "9")],
+                    run.10 = x[which(groups == "10")])
 
-melted_cormat = melt(cormat)
-
-ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile()
+# Function to add histograms
+panel.hist <- function(x, ...) {
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5))
+    his <- hist(x, plot = FALSE)
+    breaks <- his$breaks
+    nB <- length(breaks)
+    y <- his$counts
+    y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col = rgb(0, 1, 1, alpha = 0.5), ...)
+    # lines(density(x), col = 2, lwd = 2) # Uncomment to add density lines
+}
 ```
 
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten indpeendent runs."}
+# Creating the scatter plot matrix
+pairs(series,
+      upper.panel = panel.cor,         # Disabling the upper panel
+      diag.panel = panel.hist)    # Adding the histograms```
+```
 
 ## Subset MCMC chains dataset
 
