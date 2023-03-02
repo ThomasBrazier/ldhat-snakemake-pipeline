@@ -13,7 +13,6 @@ chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' datas
 K=str(config["K"])
 pop=str(config["pop"])
 bpen=config["interval.bpen"]
-ncores=int(config["cores"])
 
 wdir=config["workingdir"] + dataset
 wdirpop=config["workingdir"] + dataset + "/K" + K + ".pop" + pop
@@ -509,7 +508,7 @@ rule LDhot:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
-    threads: {ncores}
+    threads: workflow.cores
     log:
         "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.ldhot.log"
     shell:
