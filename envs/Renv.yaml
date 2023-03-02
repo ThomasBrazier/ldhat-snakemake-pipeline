@@ -13,3 +13,4 @@ dependencies:
   - r-ggpubr
   - r-yaml
   - r-coda
+  - r-reshape

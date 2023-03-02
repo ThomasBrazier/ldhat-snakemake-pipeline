@@ -21,8 +21,9 @@ require(poppr)
 library(ggplot2)
 library(ggpubr)
 library(yaml)
+library(reshape2)
 # library(MCMCglmm)
-# library(coda)
+library(coda)
 
 # Set a global ggplot theme
 ggplot2::theme_update(axis.line = element_line(colour = "black"),
@@ -279,6 +280,10 @@ cat("Plotting ten independent MCMC sampling chains.\n")
 
 plots = list()
 
+posterior = data.frame(run = character(),
+                       iter = numeric(),
+                       mean.posterior = numeric())
+
 for (i in 1:10) {
   mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
@@ -287,6 +292,11 @@ for (i in 1:10) {
                               pos1000 = as.numeric(mcmc.chain[1000,-1]),
                               posterior = apply(mcmc.chain[,-1], 2, mean),
                               totalgenetic = apply(mcmc.chain[,-1], 2, sum))
+  
+  tmp = data.frame(run = i,
+                       iter = mean.posterior$iteration,
+                       mean.posterior = mean.posterior$posterior)
+  posterior = rbind(posterior, tmp)
   
   p = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
   geom_line() +
@@ -308,6 +318,23 @@ rm(plots)
 
 
 
+## Correlation between posterior rates
+
+
+```{r, echo=FALSE}
+posterior$ru = as.factor(posterior$run)
+
+cormat = round(cor(mydata, method = "Spearman"),2)
+
+melted_cormat = melt(cormat)
+
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+```
+
+
+## Subset MCMC chains dataset
+
 MCMC chains are data-intensive (in practice there is one chain per SNP interval). To do it in a reasonable time, I reduced the data to a subset of 10,000 random intervals for each run (shape of the matrix 2,000 sampling x 10,000 intervals for each run).
 
 
@@ -325,8 +352,6 @@ for (i in 1:10) {
 ```
 
 
-
-## Correlation between chains
 
 ## Geweke diagnostic of MCMC Chain stability
 
@@ -356,7 +381,32 @@ Distribution of Geweke diagnostic values 'Z' computed for convergence in each in
 (B) Map of 'Z' along 10,000 SNPs
 
 
+```{r, echo=FALSE}
+# runs[[i]]
+geweke = geweke.diag(runs[[i]])
+# geweke.plot(runs[[i]])
+```
 
+
+```{r, echo=FALSE}
+df = data.frame(position = 1:length(geweke$z),
+                Z = geweke$z)
+
+ggplot2::ggplot(data = df, aes(x = Z)) +
+  geom_density() +
+  geom_vline(xintercept = 1, color = "Red") +
+  geom_vline(xintercept = -1, color = "Red") +
+  xlab("Geweke's Z")
+```
+
+
+```{r, echo-FALSE}
+ggplot2::ggplot(data = df, aes(x = position, y = Z)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "Red") +
+  geom_hline(yintercept = -1, color = "Red") +
+  xlab("Position") + ylab("Geweke's Z")
+```
 
 
 <!-- ## Heidelberger and Welch's Convergence Diagnostic -->
@@ -400,7 +450,23 @@ Distribution of the Gelman scaling factor computed for each interval single chai
 (A) Density
 (B) Map of 'scaling factor' along 10,000 SNPs
 
+```{r, echo=FALSE}
+gelman.res = gelman.diag(runs, transform = FALSE,
+                         multivariate = FALSE)
+```
+
+```{r, echo=FALSE}
+gelman = data.frame(position = 1:length(gelman.res$psrf),
+                       psrf = gelman.res$psrf)
+ggplot(data = gelman, aes(x = psrf.Point.est.)) + 
+  geom_density() +
+  xlab("Scale Reduction Factor")
+```
 
 
 
-
+```{r, echo-FALSE}
+ggplot2::ggplot(data = gelman, aes(x = position, y = psrf.Point.est.)) +
+  geom_point() +
+  xlab("Position") + ylab("Scale Reduction Factor")
+```
