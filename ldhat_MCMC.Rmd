@@ -275,7 +275,7 @@ Strangely, LDhat does not require a random seed. I compared ten independent runs
 Cpmpare the ten traceplots of independent runs.
 
 
-```{r mcmcChain, data, echo = FALSE}
+```{r tenTraceplots, echo = FALSE}
 cat("Plotting ten independent MCMC sampling chains.\n")
 
 plots = list()
@@ -393,7 +393,7 @@ for (i in 1:10) {
 ```
 
 
-```{r, echo-TRUE}
+```{r, echo=TRUE}
 ?geweke.diag
 ?geweke.plot
 ```
@@ -426,7 +426,7 @@ ggplot2::ggplot(data = df, aes(x = Z)) +
 ```
 
 
-```{r, echo-FALSE}
+```{r, echo=FALSE}
 ggplot2::ggplot(data = df, aes(x = position, y = Z)) +
   geom_point() +
   geom_hline(yintercept = 1, color = "Red") +
@@ -491,7 +491,7 @@ ggplot(data = gelman, aes(x = psrf.Point.est.)) +
 
 
 
-```{r, echo-FALSE}
+```{r, echo=FALSE}
 ggplot2::ggplot(data = gelman, aes(x = position, y = psrf.Point.est.)) +
   geom_point() +
   xlab("Position") + ylab("Scale Reduction Factor")
