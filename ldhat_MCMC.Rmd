@@ -256,7 +256,7 @@ res = read.table(gzfile(res.file), header = F, skip = 2)
 colnames(res) = c("loci", "mean_rho", "median_rho", "lower", "upper")
 res$loci = res$loci/10
 
-landscape = ggplot(df, aes(x = loci, y = mean_rho)) +
+landscape = ggplot(res, aes(x = loci, y = mean_rho)) +
   geom_line() +
   xlab("Genomic position (Mb)") + ylab("Mean recombination rate")
 
