@@ -333,6 +333,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
+        threads: workflow.cores
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
         conda:
