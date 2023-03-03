@@ -7,3 +7,7 @@ parallel: Warning: Semaphore stuck for 30 seconds. Consider using --semaphoretim
 ```
 
 Remove everything in your semaphore directory `~/.parallel/semaphore/`.
+
+```
+rm -rf ~/.parallel/semaphores/*
+```
