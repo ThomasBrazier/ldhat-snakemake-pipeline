@@ -256,7 +256,7 @@ res = read.table(gzfile(res.file), header = F, skip = 2)
 colnames(res) = c("loci", "mean_rho", "median_rho", "lower", "upper")
 res$loci = res$loci/10
 
-landscape = ggplot(df, aes(x = loci, y = mean_rho)) +
+landscape = ggplot(res, aes(x = loci, y = mean_rho)) +
   geom_line() +
   xlab("Genomic position (Mb)") + ylab("Mean recombination rate")
 
@@ -285,7 +285,7 @@ posterior = data.frame(run = character(),
                        mean.posterior = numeric())
 
 for (i in 1:10) {
-  mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
+  mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "")
   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
   mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
                               posone = as.numeric(mcmc.chain[1,-1]),
@@ -369,7 +369,7 @@ MCMC chains are data-intensive (in practice there is one chain per SNP interval)
 runs = list()
 
 for (i in 1:10) {
-  mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".", i, ".rates.txt.gz", sep = "")
+  mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "")
   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
   mcmc.chain = mcmc.chain[,10000]
   runs[[i]] = as.mcmc(mcmc.chain)
