@@ -77,23 +77,41 @@ rule stat:
        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt",
        "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt"
    output:
-      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.res.txt",
-      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.bounds.txt.gz",
-      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.rates.txt.gz"
+      "{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{run}.res.txt"
    shell:
       """
       burn={config[ldhat.burn]}
       singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.
-      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.rates.txt
-      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{wildcards.run}.bounds.txt
       """
+
+
+rule gzipStat:
+   """
+   Compute statistics on interval
+   """
+   input:
+      expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.res.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+      expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+      expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
+   output:
+      expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.bounds.txt.gz", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+      expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt.gz", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
+   conda:
+      "envs/vcftools.yaml"
+   shell:
+      """
+      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.rates.txt
+      gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.bounds.txt
+      """
+
 
 rule MCMC_report:
     """
     Produce a Rmarkdown/pdf report
     """
     input:
-        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.res.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.bounds.txt.gz", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
+        expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt.gz", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns)
     output:
         "{wdirMCMC}/{dataset}.ldhat_MCMC.html"
     conda:
