@@ -510,7 +510,7 @@ rule LDhot:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
-    threads: 4
+    threads: workflow.cores
     log:
         "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.ldhot.log"
     shell:
