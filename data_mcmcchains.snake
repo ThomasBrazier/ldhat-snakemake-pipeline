@@ -54,6 +54,7 @@ rule interval:
         expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.bounds.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
         expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.rates.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns),
         temporary(expand("{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.{nruns}.type_table.txt", wdirMCMC=wdirMCMC, dataset=dataset, chrom=chrom, bpen=bpen, nruns=nruns))
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -63,7 +64,7 @@ rule interval:
         bpen={config[interval.bpen]}
         for i in {{1..{nruns}}}
         do
-        sem -j {config[cores]} singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.$i.
+        sem singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.$i.
         done
         sem --wait
         """
