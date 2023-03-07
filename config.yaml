@@ -1,11 +1,11 @@
 workingdir: 'data/'
-cores: 16
+cores: 4
 seed: 42 # Random seed
 latency-wait: 60 # The time in seconds Snakemake will wait for output files after completion of a rule
-large_sample: "yes" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
+large_sample: "no" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
 # Sample
 dataset: "Arabidopsis_thaliana_1001genomes"
-chrom: "4" # Chromosome to sample
+chrom: "1" # Chromosome to sample
 maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1
 maxmissing: 0.9
@@ -14,10 +14,11 @@ subset: 40
 # data_preprocessing
 maxk: 4
 # recombination map processing
-K: 3
-pop: 2
+K: 1
+pop: 1
 mu: 1.28e-8
 theta: 0.001
+knots: 8 # Number of knots in SMC++ estimate
 shapeitWindow: 2 # Window size in Mb
 ploidy: 1
 pseudodiploid: 1
@@ -28,8 +29,8 @@ interval.bpen: 5
 interval.samp: 5000
 interval.iter: 10000000
 ldhat.burn: 200
-ldhot.seed: 42
+ldhotseed: 42
 ldhot.nsim: 100
-ldhot.hotdist: 0.5
+ldhot.hotdist: 1 
 ldhot.sig: 0.001
 ldhot.sigjoin: 0.001
