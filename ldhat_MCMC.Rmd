@@ -376,9 +376,9 @@ panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten indpeendent runs."}
 # Creating the scatter plot matrix
-pairs(series,
-      upper.panel = panel.cor,         # Disabling the upper panel
-      diag.panel = panel.hist)    # Adding the histograms```
+# pairs(series,
+#       upper.panel = panel.cor,         # Disabling the upper panel
+#       diag.panel = panel.hist)    # Adding the histograms
 ```
 
 ## Subset MCMC chains dataset
