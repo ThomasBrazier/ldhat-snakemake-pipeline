@@ -350,171 +350,176 @@ series = data.frame(run.1 = x[which(groups == "1")],
 #     # lines(density(x), col = 2, lwd = 2) # Uncomment to add density lines
 # }
 
-# See sources in https://gist.github.com/florianhartig/8423115
-panel.hist <- function(x, ...)
+# See sources in https://epurdom.github.io/Stat131A/lectures/2018SpringLectures/04MultiVisual_forClassCode.html
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 {
-  usr <- par("usr"); on.exit(par(usr))
-  par(usr = c(usr[1:2], 0, 1.5) )
-  h <- hist(x, plot = FALSE)
-  breaks <- h$breaks; nB <- length(breaks)
-  y <- h$counts; y <- y/max(y)
-  rect(breaks[-nB], 0, breaks[-1], y, col="blue4", ...)
+    #from help of pairs
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y,use="pairwise.complete.obs"))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
 }
 
-panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
+panel.hist <- function(x, ...)
 {
-  usr <- par("usr"); on.exit(par(usr))
-  par(usr = c(0, 1, 0, 1))
-  r <- abs(cor(x, y, method = "spearman"))
-  txt <- format(c(r, 0.123456789), digits=digits)[1]
-  txt <- paste(prefix, txt, sep="")
-  if(missing(cex.cor)) cex <- 0.8/strwidth(txt)
-  text(0.5, 0.5, txt, cex = cex * r)
+    #from help of pairs
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks; nB <- length(breaks)
+    y <- h$counts; y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y)
 }
+
 ```
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten indpeendent runs."}
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten independent runs."}
 # Creating the scatter plot matrix
 pairs(series,
       upper.panel = panel.cor,         # Disabling the upper panel
       diag.panel = panel.hist)    # Adding the histograms```
 ```
 
-## Subset MCMC chains dataset
-
-MCMC chains are data-intensive (in practice there is one chain per SNP interval). To do it in a reasonable time, I reduced the data to a subset of 10,000 random intervals for each run (shape of the matrix 2,000 sampling x 10,000 intervals for each run).
 
 
+<!-- ## Subset MCMC chains dataset -->
 
-```{r subsetChains, echo=FALSE}
-runs = list()
-
-for (i in 1:10) {
-  mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "")
-  mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
-  mcmc.chain = mcmc.chain[,10000]
-  runs[[i]] = as.mcmc(mcmc.chain)
-  rm(mcmc.chain)
-}
-```
+<!-- MCMC chains are data-intensive (in practice there is one chain per SNP interval). To do it in a reasonable time, I reduced the data to a subset of 10,000 random intervals for each run (shape of the matrix 2,000 sampling x 10,000 intervals for each run). -->
 
 
 
-## Geweke diagnostic of MCMC Chain stability
+<!-- ```{r subsetChains, echo=FALSE} -->
+<!-- runs = list() -->
 
-```{r, echo=FALSE}
-#========================================================================#
-# Geweke Diagnostic of MC Chain Stability
-#------------------------------------------------------------------------#
-# if the whole chain is stationary, the means of the values early and late in the sequence should be similar
-# convergence diagnostic 'Z' is the difference between the 2 means divided by the asymptotic standard error of their difference
-# values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence
-# can also estimate p-value of 'Z' from the normal distribution
-# yields the probability that the divided chain means are different
-```
-
-
-```{r, echo=TRUE}
-?geweke.diag
-?geweke.plot
-```
-
-
-If the whole chain is stationary, the means of the values early and late in the sequence should be similar. The convergence diagnostic 'Z' is the difference between the two means divided by the asymptotic standard error of their difference.
-Values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence. We can also estimate p-value of 'Z' from the normal distribution which yield the probability that the divided chain means are different.
-
-Distribution of Geweke diagnostic values 'Z' computed for convergence in each interval single chain (10,000 values).
-(A) Density
-(B) Map of 'Z' along 10,000 SNPs
-
-
-```{r, echo=FALSE}
-# runs[[i]]
-geweke = geweke.diag(runs[[i]])
-# geweke.plot(runs[[i]])
-```
-
-
-```{r, echo=FALSE}
-df = data.frame(position = 1:length(geweke$z),
-                Z = geweke$z)
-
-ggplot2::ggplot(data = df, aes(x = Z)) +
-  geom_density() +
-  geom_vline(xintercept = 1, color = "Red") +
-  geom_vline(xintercept = -1, color = "Red") +
-  xlab("Geweke's Z")
-```
-
-
-```{r, echo=FALSE}
-ggplot2::ggplot(data = df, aes(x = position, y = Z)) +
-  geom_point() +
-  geom_hline(yintercept = 1, color = "Red") +
-  geom_hline(yintercept = -1, color = "Red") +
-  xlab("Position") + ylab("Geweke's Z")
-```
-
-
-<!-- ## Heidelberger and Welch's Convergence Diagnostic -->
-
-<!-- ```{r, echo=FALSE} -->
-<!-- #========================================================================# -->
-<!-- # Heidelberger and Welch's Convergence Diagnostic -->
-<!-- #------------------------------------------------------------------------# -->
-<!-- # probability of rejecting hypothesis that Markov Chain is a stable/stationary distribution -->
-<!-- # if Halfwidth test fails, chain should be extended -->
-<!-- # ?heidel.diag -->
+<!-- for (i in 1:10) { -->
+<!--   mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "") -->
+<!--   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1) -->
+<!--   mcmc.chain = mcmc.chain[,10000] -->
+<!--   runs[[i]] = as.mcmc(mcmc.chain) -->
+<!--   rm(mcmc.chain) -->
+<!-- } -->
 <!-- ``` -->
 
 
-## Gelman diagnostic for testing convergence among chains
+
+<!-- ## Geweke diagnostic of MCMC Chain stability -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- #========================================================================# -->
+<!-- # Geweke Diagnostic of MC Chain Stability -->
+<!-- #------------------------------------------------------------------------# -->
+<!-- # if the whole chain is stationary, the means of the values early and late in the sequence should be similar -->
+<!-- # convergence diagnostic 'Z' is the difference between the 2 means divided by the asymptotic standard error of their difference -->
+<!-- # values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence -->
+<!-- # can also estimate p-value of 'Z' from the normal distribution -->
+<!-- # yields the probability that the divided chain means are different -->
+<!-- ``` -->
 
 
-```{r, echo=FALSE}
-#========================================================================#
-# Gelman diagnostic: 'potential scale reduction factor'
-#------------------------------------------------------------------------#
-# ?gelman.diag
-#------------------------------------------------------------------------#
-# Alphas
-#------------------------------------------------------------------------#
-# testing convergence among chains
-#!# scaling factor should be less than 1.2
-# values substantially greater than 1 indicate lack of convergence
-```
+<!-- ```{r, echo=TRUE} -->
+<!-- ?geweke.diag -->
+<!-- ?geweke.plot -->
+<!-- ``` -->
 
 
-```{r, echo=TRUE}
-?gelman.diag
-```
+<!-- If the whole chain is stationary, the means of the values early and late in the sequence should be similar. The convergence diagnostic 'Z' is the difference between the two means divided by the asymptotic standard error of their difference. -->
+<!-- Values of 'Z' near the extreme tails of the N(0,1) indicates lack of convergence. We can also estimate p-value of 'Z' from the normal distribution which yield the probability that the divided chain means are different. -->
+
+<!-- Distribution of Geweke diagnostic values 'Z' computed for convergence in each interval single chain (10,000 values). -->
+<!-- (A) Density -->
+<!-- (B) Map of 'Z' along 10,000 SNPs -->
 
 
-The Gelman diagnostic is testing for convergence among independent chains. The scaling factor computed here should less than 1.2. Values substantially greater than one indicate a lack of convergennce.
+<!-- ```{r, echo=FALSE} -->
+<!-- # runs[[i]] -->
+<!-- geweke = geweke.diag(runs[[i]]) -->
+<!-- # geweke.plot(runs[[i]]) -->
+<!-- ``` -->
 
 
-Distribution of the Gelman scaling factor computed for each interval single chain (10,000 values).
-(A) Density
-(B) Map of 'scaling factor' along 10,000 SNPs
+<!-- ```{r, echo=FALSE} -->
+<!-- df = data.frame(position = 1:length(geweke$z), -->
+<!--                 Z = geweke$z) -->
 
-```{r, echo=FALSE}
-gelman.res = gelman.diag(runs, transform = FALSE,
-                         multivariate = FALSE)
-```
-
-```{r, echo=FALSE}
-gelman = data.frame(position = 1:length(gelman.res$psrf),
-                       psrf = gelman.res$psrf)
-ggplot(data = gelman, aes(x = psrf.Point.est.)) + 
-  geom_density() +
-  xlab("Scale Reduction Factor")
-```
+<!-- ggplot2::ggplot(data = df, aes(x = Z)) + -->
+<!--   geom_density() + -->
+<!--   geom_vline(xintercept = 1, color = "Red") + -->
+<!--   geom_vline(xintercept = -1, color = "Red") + -->
+<!--   xlab("Geweke's Z") -->
+<!-- ``` -->
 
 
+<!-- ```{r, echo=FALSE} -->
+<!-- ggplot2::ggplot(data = df, aes(x = position, y = Z)) + -->
+<!--   geom_point() + -->
+<!--   geom_hline(yintercept = 1, color = "Red") + -->
+<!--   geom_hline(yintercept = -1, color = "Red") + -->
+<!--   xlab("Position") + ylab("Geweke's Z") -->
+<!-- ``` -->
 
-```{r, echo=FALSE}
-ggplot2::ggplot(data = gelman, aes(x = position, y = psrf.Point.est.)) +
-  geom_point() +
-  xlab("Position") + ylab("Scale Reduction Factor")
-```
+
+<!-- <!-- ## Heidelberger and Welch's Convergence Diagnostic --> -->
+
+<!-- <!-- ```{r, echo=FALSE} --> -->
+<!-- <!-- #========================================================================# --> -->
+<!-- <!-- # Heidelberger and Welch's Convergence Diagnostic --> -->
+<!-- <!-- #------------------------------------------------------------------------# --> -->
+<!-- <!-- # probability of rejecting hypothesis that Markov Chain is a stable/stationary distribution --> -->
+<!-- <!-- # if Halfwidth test fails, chain should be extended --> -->
+<!-- <!-- # ?heidel.diag --> -->
+<!-- <!-- ``` --> -->
+
+
+<!-- ## Gelman diagnostic for testing convergence among chains -->
+
+
+<!-- ```{r, echo=FALSE} -->
+<!-- #========================================================================# -->
+<!-- # Gelman diagnostic: 'potential scale reduction factor' -->
+<!-- #------------------------------------------------------------------------# -->
+<!-- # ?gelman.diag -->
+<!-- #------------------------------------------------------------------------# -->
+<!-- # Alphas -->
+<!-- #------------------------------------------------------------------------# -->
+<!-- # testing convergence among chains -->
+<!-- #!# scaling factor should be less than 1.2 -->
+<!-- # values substantially greater than 1 indicate lack of convergence -->
+<!-- ``` -->
+
+
+<!-- ```{r, echo=TRUE} -->
+<!-- ?gelman.diag -->
+<!-- ``` -->
+
+
+<!-- The Gelman diagnostic is testing for convergence among independent chains. The scaling factor computed here should less than 1.2. Values substantially greater than one indicate a lack of convergennce. -->
+
+
+<!-- Distribution of the Gelman scaling factor computed for each interval single chain (10,000 values). -->
+<!-- (A) Density -->
+<!-- (B) Map of 'scaling factor' along 10,000 SNPs -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- gelman.res = gelman.diag(runs, transform = FALSE, -->
+<!--                          multivariate = FALSE) -->
+<!-- ``` -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- gelman = data.frame(position = 1:length(gelman.res$psrf), -->
+<!--                        psrf = gelman.res$psrf) -->
+<!-- ggplot(data = gelman, aes(x = psrf.Point.est.)) +  -->
+<!--   geom_density() + -->
+<!--   xlab("Scale Reduction Factor") -->
+<!-- ``` -->
+
+
+
+<!-- ```{r, echo=FALSE} -->
+<!-- ggplot2::ggplot(data = gelman, aes(x = position, y = psrf.Point.est.)) + -->
+<!--   geom_point() + -->
+<!--   xlab("Position") + ylab("Scale Reduction Factor") -->
+<!-- ``` -->
