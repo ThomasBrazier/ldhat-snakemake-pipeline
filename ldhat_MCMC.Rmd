@@ -381,7 +381,7 @@ panel.hist <- function(x, ...)
 # Creating the scatter plot matrix
 pairs(series,
       upper.panel = panel.cor,         # Disabling the upper panel
-      diag.panel = panel.hist)    # Adding the histograms```
+      diag.panel = panel.hist)    # Adding the histograms
 ```
 
 
