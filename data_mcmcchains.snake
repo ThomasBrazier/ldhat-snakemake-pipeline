@@ -101,6 +101,8 @@ rule gzipStat:
       "envs/vcftools.yaml"
    shell:
       """
+      rm -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.new_lk.txt || true
+      rm -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.type_table.txt || true
       gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.rates.txt
       gzip -f {wdirMCMC}/{dataset}.{chrom}.bpen{bpen}.run.*.bounds.txt
       """
