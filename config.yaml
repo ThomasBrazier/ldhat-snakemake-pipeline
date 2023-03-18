@@ -9,7 +9,7 @@ chrom: "1" # Chromosome to sample
 maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1
 maxmissing: 0.9
-minQ: 40
+minQ: 30
 subset: 40
 # data_preprocessing
 maxk: 4
@@ -31,6 +31,6 @@ interval.iter: 10000000
 ldhat.burn: 200
 ldhotseed: 42
 ldhot.nsim: 100
-ldhot.hotdist: 1 
+ldhot.hotdist: 1.5
 ldhot.sig: 0.001
-ldhot.sigjoin: 0.001
+ldhot.sigjoin: 0.01
