@@ -340,7 +340,7 @@ if config["large_sample"] == "yes":
             "envs/vcftools.yaml"
         shell:
             """
-            semaphore_name=$(echo {dataset}_{chrom}_$RANDOM_intervalstatsplit)
+            semaphore_name=$(echo "{dataset}_{chrom}_${{RANDOM}}_intervalstatsplit")
             parallel --citation | 'will cite' || true
             iter={config[interval.iter]}
             samp={config[interval.samp]}
