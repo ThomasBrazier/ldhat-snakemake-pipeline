@@ -55,12 +55,22 @@ rule trimming_vcf:
         """
         if [ -f "{wdir}/samplelist" ];
         then
+            if [ {config[minQ]} -eq 0 ]
+            then
+            vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --keep {wdir}/samplelist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 
+            else
             vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --keep {wdir}/samplelist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
+            fi
             mv {wdir}/out.recode.vcf {wdir}/trimmed.vcf
             bgzip -f {wdir}/trimmed.vcf
             #rm {wdir}/out.log
         else
+            if [ {config[minQ]} -eq 0 ]
+            then
+            vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+            else
             vcftools --gzvcf {input} --out {wdir}/out --recode --remove-indels --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
+            fi
             mv {wdir}/out.recode.vcf {wdir}/trimmed.vcf
             bgzip {wdir}/trimmed.vcf
             #rm {wdir}/out.log
