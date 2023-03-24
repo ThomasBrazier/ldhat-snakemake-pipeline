@@ -154,6 +154,7 @@ rule phasing_vcf:
         "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.phasing_vcf.log"
+    threads: workflow.cores
     conda:
         "envs/shapeit.yaml"
     shell:
@@ -163,7 +164,7 @@ rule phasing_vcf:
         shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length
-        zcat {wdir}/{dataset}.vcf.gz | grep '^#' > {wdirpop}/newheader
+        zcat {wdir}/{dataset}.vcf.gz | head -n 1000 | grep '^#' > {wdirpop}/newheader
         cat {wdirpop}/newheader | grep -v '^#CHROM' > {wdirpop}/newheader2
         cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep '^#CHROM' > {wdirpop}/colnames
         cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep -v '^#' > {wdirpop}/newvcf
