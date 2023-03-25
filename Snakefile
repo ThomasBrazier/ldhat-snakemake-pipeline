@@ -164,10 +164,10 @@ rule phasing_vcf:
         shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
         # replace header in vcf to keep information of contig length
-        zcat {wdir}/{dataset}.vcf.gz | head -n 1000 | grep '^#' > {wdirpop}/newheader
-        cat {wdirpop}/newheader | grep -v '^#CHROM' > {wdirpop}/newheader2
-        cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep '^#CHROM' > {wdirpop}/colnames
-        cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep -v '^#' > {wdirpop}/newvcf
+        zcat {wdir}/{dataset}.vcf.gz | head -n 1000 | grep '^#' > {wdirpop}/newheader || true
+        cat {wdirpop}/newheader | grep -v '^#CHROM' > {wdirpop}/newheader2 || true
+        cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep '^#CHROM' > {wdirpop}/colnames || true
+        cat {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf | grep -v '^#' > {wdirpop}/newvcf || true
         cat {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf > {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf
         rm {wdirpop}/newheader {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf
