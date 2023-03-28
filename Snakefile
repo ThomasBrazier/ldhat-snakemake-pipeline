@@ -297,7 +297,7 @@ if config["large_sample"] == "yes":
             done
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.recode.vcf
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
-	    """
+	        """
 
     rule convert:
         """
@@ -322,7 +322,7 @@ if config["large_sample"] == "yes":
             for i in $(seq $nbatch); do
             vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
-	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
+     	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
 
@@ -351,14 +351,16 @@ if config["large_sample"] == "yes":
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
             for i in $(seq $nbatch); do
-            sem -j +0 --semaphorename $semaphore_name singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            #sem -j +0 --semaphorename $semaphore_name singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
             done
-            sem --wait
+            #sem --wait
             for i in $(seq $nbatch); do
-            sem -j +0 --semaphorename $semaphore_name singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
-            rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz"
+            #sem -j +0 --semaphorename $semaphore_name singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
+            singularity exec --bind $PWD:/data ldhat.sif "stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. && \
+            #rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.bounds.txt {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz"
             done
-            sem --wait
+            #sem --wait
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
