@@ -1,36 +1,34 @@
-workingdir: 'data/'
-cores: 4
-seed: 42 # Random seed
+workingdir: 'data/' # The directory where is located your <dataset> dir
+cores: 4 # Number of cores to used in the pipeline
+seed: 42 # Random seed; mainly used to subset individuals randomly
 latency-wait: 60 # The time in seconds Snakemake will wait for output files after completion of a rule
 large_sample: "no" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
-# Sample
-dataset: "Arabidopsis_thaliana_1001genomes"
+# Large chromosomes require 'yes' to be tractable
+# Sample config
+dataset: "Arabidopsis_thaliana_1001genomes" # Name of the dataset
 chrom: "1" # Chromosome to sample
 maf: 0.05 # The minimum minor allele frequency required
-missing: 0.1
-maxmissing: 0.9
-minQ: 30
-subset: 40
-# data_preprocessing
-maxk: 4
-# recombination map processing
-K: 1
-pop: 1
-mu: 1.28e-8
-theta: 0.001
-knots: 8 # Number of knots in SMC++ estimate
-shapeitWindow: 2 # Window size in Mb
+missing: 0.1 # The maximum amount of missing data allowed
+maxmissing: 0.9 # The required proportion of data (0.9 means that at less than 10% of sites are missing)
+minQ: 30 # 0 or >0; Includes only sites with Quality scores above this value; when set to 0, sites are not filtered on this criterion (e.g. info not avalaible)
+subset: 40 # Number of diploid individuals to randomly subset
+maxk: 4 # Pop structure analysis: Max number of clusters to explore with FastSTRUCTURE
+K: 1 # The number of clusters K to retain
+pop: 1 # The cluster (i.e. population) to sample
+shapeitWindow: 2 # Window size in Mb for phasing with ShapeIt2
+mu: 1.28e-8 # The population mutation rate
+theta: 0.001 # The theta value set in LDhat
 ploidy: 1
-pseudodiploid: 1
-completelk: "no"
-cut_size: 2000
-cut_overlap: 200
-interval.bpen: 5
-interval.samp: 5000
-interval.iter: 10000000
-ldhat.burn: 200
-ldhotseed: 42
-ldhot.nsim: 100
-ldhot.hotdist: 1.5
-ldhot.sig: 0.001
-ldhot.sigjoin: 0.01
+pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
+completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
+cut_size: 2000 # Size of chunks to parallelize LDhat (number of SNPs)
+cut_overlap: 200 # Number of overlapping SNPs in each chunk
+interval.bpen: 5 # Block penalty in LDhat
+interval.samp: 5000 # Sample every n iterations within the MCMC chain
+interval.iter: 10000000 # Total number of iterations to run the MCMC chain
+ldhat.burn: 200 # The size of the burnin (number of sampled iterations)
+ldhotseed: 42 # Random seed just for LDhot
+ldhot.nsim: 100 # Number of si mulations used to assess the significance of a hotspot in LDhot
+ldhot.hotdist: 1.5 # Size +- around hotspot centre (kb)
+ldhot.sig: 0.001 # Significance threshod (p-value) of a hotspot
+ldhot.sigjoin: 0.01 # p-value to merge contiguous hotspots in LDhot
