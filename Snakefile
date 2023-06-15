@@ -222,8 +222,6 @@ rule gzpseudodiploid:
         """
 
 
-# TODO A step to reduce sample size to a random subset
-# Memory issues when sample size is high
 rule subset_ldhat:
     """
     Subset a random sample of individuals
@@ -323,6 +321,13 @@ if config["large_sample"] == "yes":
             vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
      	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
+            """
+
+
+    if config["pairwise"] == "yes":
+        rule pairwise:
+            """
+            Estimate theta with LDhat pairwise
             """
 
 
