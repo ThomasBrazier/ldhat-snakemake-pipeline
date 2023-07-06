@@ -33,7 +33,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
+        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen)
     shell:
         "echo 'Finished'"
 
@@ -324,10 +324,68 @@ if config["large_sample"] == "yes":
             """
 
 
-    if config["pairwise"] == "yes":
-        rule pairwise:
+    rule pairwise_split:
+        """
+        Estimate 'pairwise' recombination rates to get an estimate of theta per site
+        """
+        input:
+            "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
+        output:
+            "{wdirpop}/pairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done"
+        threads: workflow.cores
+        log:
+            "{wdirpop}/logs/{dataset}.pairwise.{chrom}.bpen{bpen}.log"
+        conda:
+            "envs/vcftools.yaml"
+        shell:
             """
-            Estimate theta with LDhat pairwise
+            iter={config[interval.iter]}
+            samp={config[interval.samp]}
+            bpen={config[interval.bpen]}
+            burn={config[ldhat.burn]}
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+            echo "nbatch = $nbatch"
+            for i in $(seq $nbatch)
+            do
+            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            rm {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt
+            done
+            gzip {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
+            gzip {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
+            echo "Done" > {wdirpop}/pairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done
+            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+            echo "Concatenate into one file"
+            overlap={config[cut_overlap]}
+            chunk={config[cut_size]}
+            bigchunk=$(echo $(( $chunk-$overlap/2 )))
+            smalloverlap=$(echo $(( $overlap/2 )))
+            echo $bigchunk
+            echo $smalloverlap
+            cd {wdirpop}/ldhat/{dataset}.{chrom}/
+            echo $PWD
+            echo "First chunk"
+            echo $nbatch
+            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt || true
+            for i in $(seq 2 $(( $nbatch-1 )))
+            do
+            echo $i
+            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
+            done
+            echo "End of loop on split files."
+            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
+            cd ../../../../..
+            echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+            Loci="-1.000"
+            MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
+            Median=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$3}} END {{printf "%.0f", s}}')
+            L95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$4}} END {{printf "%.0f", s}}')
+            U95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$5}} END {{printf "%.0f", s}}')
+            echo "$Loci     $MeanRho        $Median $L95    $U95"
+            echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+            cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
+            cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
+            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+            bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
             """
 
 
@@ -337,7 +395,7 @@ if config["large_sample"] == "yes":
         Remove temporary files at each iteration
         """
         input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
+            "{wdirpop}/ipairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
         threads: workflow.cores
@@ -454,14 +512,40 @@ elif config["large_sample"] == "no":
             vcftools --gzvcf {input.vcf} --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
             """
 
+
+    rule pairwise:
+        """
+        Estimate pairwise recombination rates and theta per site with LDhat
+        """
+        input:
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+        output:
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt"
+        log:
+            "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+        shell:
+            """
+            iter={config[interval.iter]}
+            samp={config[interval.samp]}
+            bpen={config[interval.bpen]}
+            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.
+            """
+
+
     rule interval:
         """
         Estimate a recombination landscape with LDhat
         """
         input:
             "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
-        output:
+            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt"
+         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
@@ -495,7 +579,7 @@ elif config["large_sample"] == "no":
             burn={config[ldhat.burn]}
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
-	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+    	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
 	    """
 
