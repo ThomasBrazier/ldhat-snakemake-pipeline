@@ -33,7 +33,8 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen)
+        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html"
     shell:
         "echo 'Finished'"
 
@@ -286,7 +287,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/logs/{dataset}.split_dataset.{chrom}.log"
         shell:
             """
-	    # The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
+    	    # The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
             bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions 
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
@@ -317,76 +318,14 @@ if config["large_sample"] == "yes":
             """
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
+            rm  {wdirpop}/ldhat/{dataset}.{chrom}/convert.done || true
+            touch {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             for i in $(seq $nbatch); do
-            vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
+            vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i | tee -a {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             done
      	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
-
-    rule pairwise_split:
-        """
-        Estimate 'pairwise' recombination rates to get an estimate of theta per site
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
-        output:
-            "{wdirpop}/pairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done"
-        threads: workflow.cores
-        log:
-            "{wdirpop}/logs/{dataset}.pairwise.{chrom}.bpen{bpen}.log"
-        conda:
-            "envs/vcftools.yaml"
-        shell:
-            """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            burn={config[ldhat.burn]}
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
-            echo "nbatch = $nbatch"
-            for i in $(seq $nbatch)
-            do
-            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-            rm {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt
-            done
-            gzip {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
-            gzip {wdirpop}/pairwise/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
-            echo "Done" > {wdirpop}/pairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done
-            nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
-            echo "Concatenate into one file"
-            overlap={config[cut_overlap]}
-            chunk={config[cut_size]}
-            bigchunk=$(echo $(( $chunk-$overlap/2 )))
-            smalloverlap=$(echo $(( $overlap/2 )))
-            echo $bigchunk
-            echo $smalloverlap
-            cd {wdirpop}/ldhat/{dataset}.{chrom}/
-            echo $PWD
-            echo "First chunk"
-            echo $nbatch
-            zcat bpen{bpen}.batch_1.res.txt.gz | tail -n +3 | head -n $bigchunk > bpen{bpen}.res_noheader.txt || true
-            for i in $(seq 2 $(( $nbatch-1 )))
-            do
-            echo $i
-            zcat bpen{bpen}.batch_$i.res.txt.gz | tail -n +3 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
-            done
-            echo "End of loop on split files."
-            zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
-            cd ../../../../..
-            echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
-            Loci="-1.000"
-            MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
-            Median=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$3}} END {{printf "%.0f", s}}')
-            L95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$4}} END {{printf "%.0f", s}}')
-            U95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$5}} END {{printf "%.0f", s}}')
-            echo "$Loci     $MeanRho        $Median $L95    $U95"
-            echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
-            cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
-            cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
-            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-            bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
-            """
 
 
     rule interval_stat_split:
@@ -395,9 +334,11 @@ if config["large_sample"] == "yes":
         Remove temporary files at each iteration
         """
         input:
-            "{wdirpop}/ipairwise/{dataset}.{chrom}/pairwise_bpen{bpen}.done"
+            "{wdirpop}/ldhat/{dataset}.{chrom}/convert.done"
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.batch.res.tar.gz",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.batch.rates.tar.gz"
         threads: workflow.cores
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
@@ -411,15 +352,17 @@ if config["large_sample"] == "yes":
             burn={config[ldhat.burn]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
             echo "nbatch = $nbatch"
+            rm {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt || true
+            touch {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt
             for i in $(seq $nbatch)
             do
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. | tee -a {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i. | tee -a {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt
             rm {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.new_lk.txt {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_$i.type_table.txt
             done
-            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
-            gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
-            echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done
+            tar -czvf {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.batch.res.tar.gz {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.res.txt
+            tar -czvf {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.batch.rates.tar.gz {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.batch_*.rates.txt
+            echo "Done" >> {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt
             """
 
 
@@ -428,7 +371,7 @@ if config["large_sample"] == "yes":
         Concatenate .res.txt files
         """
         input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.interval_stat_split.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
         log:
@@ -523,7 +466,8 @@ elif config["large_sample"] == "no":
         output:
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt"
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
         log:
             "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
         shell:
@@ -531,7 +475,7 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
             """
 
 
@@ -544,11 +488,13 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt"
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
+            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
          output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.output.txt",
             temporary("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.type_table.txt")
         log:
             "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
@@ -557,7 +503,7 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif interval -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.output.txt
             """
 
     rule stat:
@@ -567,17 +513,19 @@ elif config["large_sample"] == "no":
         input:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.output.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
+	        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.output.txt"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
         shell:
             """
             burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}. | {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.ouput.txt
             # Compress intermediary files
     	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
@@ -592,10 +540,13 @@ rule LDhot:
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.output.txt"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
-	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
     threads: workflow.cores
     log:
@@ -603,10 +554,32 @@ rule LDhot:
     shell:
         """
         nsim={config[ldhot.nsim]}
-        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]}
-        singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
-	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
-	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
+        singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt
+        singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt
+    	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
+	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
         """
+
+
+rule shortReport:
+    """
+    Compile a short report of results and dataset quality
+    """
+    input:
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
+        "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt"
+    output:
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html"
+    shell:
+        """
+        cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml
+        Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
+    	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
+        """
+
+
+
 

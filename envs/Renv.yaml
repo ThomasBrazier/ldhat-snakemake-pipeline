@@ -14,3 +14,5 @@ dependencies:
   - r-yaml
   - r-coda
   - r-reshape
+  - r-ggplot2
+  - r-yaml

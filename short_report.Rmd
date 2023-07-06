@@ -1,0 +1,242 @@
+---
+title: "Data and Results Quality Report"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  vcf_file: ""
+  chromosome: ""
+  bpen: ""
+  wdirpop: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE}
+require(rmarkdown)
+require(vcfR)
+require(adegenet)
+require(poppr)
+require(ggplot2)
+require(yaml)
+```
+
+
+# Automatic data and results quality report
+
+
+```{r data, echo = TRUE}
+dataset = params$vcf_file
+chromosome = params$chromosome
+bpen = params$bpen
+wdirpop = params$wdirpop
+
+vcf_file = paste(wdirpop, "/", dataset, ".pop.vcf.gz", sep = "")
+cat("Processing dataset", dataset, "\n")
+# Read the vcf
+vcf = read.vcfR(vcf_file, verbose = FALSE)
+
+# Filter the chromosome
+vcf=vcf[which(vcf@fix[,1] == chromosome)]
+
+# Create a chromR object.
+chrom = create.chromR(name = chr, vcf = vcf_subset)
+# Summary of the chromosome
+chrom
+
+```
+
+## Config
+
+YAML config file used for analyses.
+
+``` {r yaml, echo = TRUE}
+yaml = read_yaml(paste0(wdirpop, "/", dataset, ".", chromosome,".bpen", bpen, ".config.yaml"))
+
+yaml
+```
+
+
+## Number of markers and individuals
+
+```{r datasummary, echo = TRUE}
+#==================================================
+# Number of positions
+#==================================================
+nrow(vcf@gt)
+
+#==================================================
+# Number of individuals
+#==================================================
+ncol(vcf@gt)
+```
+
+# POLYMORPHISM AND SNP QUALITY
+
+```{r genlight, echo = FALSE}
+# Convert to genlight for faster computation and memory efficiency
+# Large genomic dataset
+genlight = vcfR2genlight(vcf)
+genlight
+```
+
+
+### Missing data
+
+```{r missing data, include = FALSE}
+# Estimating number of missing data for each locus
+missing = glNA(genlight)
+
+# Distribution of proportions of missing data per site
+hist(missing/nLoc(genlight), breaks = 40,
+     main = "Proportions of missing data per site",
+     xlab = "Missing data")
+```
+
+
+### Alleles
+
+<!-- Number of alleles per sites and individuals. -->
+
+<!-- ```{r echo = TRUE} -->
+<!-- # Sum of second allele in each SNP -->
+<!-- sumallele = glSum(genlight) -->
+<!-- # Distribution of Minor Allele Frequencies -->
+<!-- hist((sumallele/nLoc(genlight)), breaks = 40, -->
+<!--      main = "Minor Allelic Frequencies", -->
+<!--      xlab = "Minor Allelic Frequency") -->
+
+<!-- # Mean number of second allele in each SNP -->
+<!-- meanallele = glMean(genlight) -->
+
+<!-- # Heatmap of the number of alleles per loci as a function of individuals -->
+<!-- glPlot(genlight) -->
+<!-- ``` -->
+
+
+Minor Allele Frequency.
+
+```{r include = FALSE}
+# Element = 2 to target the minor allele
+maf = vcfR::maf(vcf, element = 2)
+```
+
+
+```{r include = FALSE}
+# Distribution of the minor allele frequency
+hist(maf[,4], breaks = 100,
+     main = "Minor Allelic Frequencies",
+     xlab = "Minor Allelic Frequency")
+abline(v = 0.005, col = "Red", lty = 2)
+abline(v = 0.05, col = "Red", lty = 1)
+```
+
+Distribution of allele frequencies.
+
+```{r include = FALSE}
+AllFreq = glMean(genlight)
+AllFreq = c(AllFreq, 1-AllFreq)
+```
+
+```{r include = FALSE}
+hist(AllFreq, proba=TRUE, col="darkseagreen3", xlab="Allele frequencies",
+main="Distribution of allele frequencies", nclass=20)
+temp = density(AllFreq, bw=.05)
+lines(temp$x, temp$y*2,lwd=3)
+```
+
+Number of SNPs without variant (i.e. only one allele).
+
+```{r include = FALSE}
+# Sum of second allele in each SNP
+sumallele = glSum(genlight)
+sum(sumallele==0)
+```
+
+
+
+<!-- Homozygosity. -->
+
+
+```{r chromosomes, echo = TRUE}
+cat("===================================\n",
+    "        Analysing chromosome", chr, "\n",
+    "===================================\n")
+# Susbet for the chromosome of interest
+vcf_subset=vcf[which(vcf@fix[,1] == chr)]
+# Create a chromR object.
+chrom = create.chromR(name = chr, vcf = vcf_subset)
+# Summary of the chromosome
+chrom
+
+# Distribution of SNPs in the genome
+hist(as.numeric(chrom@vcf@fix[,2])/10^6, breaks = 1000,
+     main = "Distribution of SNPs in the genome",
+     xlab = "Position (Mb)")
+
+# Distribution of missing data in the chromosome
+# Estimate the proportion of missing data per individual
+# genotypes in rows and individuals in columns
+# For each row, how many sites are NA
+NAsum = rowSums((is.na(chrom@vcf@gt) | (chrom@vcf@gt == ".") | (chrom@vcf@gt == "./.")),
+                na.rm = TRUE)
+
+if (sum(!is.na(NAsum)) == 0) { # If only NA values
+  # Plot proportion of missing data per SNP location
+  plot(x = as.numeric(chrom@vcf@fix[,2])/10^6, y = NAsum/nrow(chrom@vcf@gt),
+     main = "Distribution of missing data per site in the genome",
+     xlab = "Position (Mb)", ylab = "Proportion of missing data",
+     col = rgb(0, 0, 0, 0.1))
+}
+
+# Diagnostic plots (if information encoded in the vcf)
+chrom = proc.chromR(chrom, verbose = TRUE)
+plot(chrom)
+# Longitudinal analysis
+chromoqc(chrom, dp.alpha = 66)
+# Tabular summary
+head(chrom@var.info)
+head(chrom@win.info)
+```
+
+
+
+# RECOMBINATION LANDSCAPE
+
+
+``` {r, echo=F, include=F}
+# {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+
+mapfile = paste0(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt")
+
+map = read.table(gzfile(mapfile), header = T)
+# Put positions in bp
+map$Loci = map$Loci * 1000
+# Remove negative position at start
+map = map[-which(map$Loci < 0),]
+# Map ranges
+map$start = map$Loci
+map$end = c((map$Loci[-1] - 1), 0)
+# map$start = c(0, head(map$Loci, -1))
+# map$end = (map$Loci - 1)
+map = head(map, -1)
+# Combine
+map = cbind(set, chromosome, map)
+```
+
+
+```{r}
+ggplot(ldmap, aes(x = end/10^6, y = Mean_rho)) +
+        geom_line() +
+        xlab("Genomic position (Mb)") + ylab("Mean Rho/kb") +
+        ggtitle(paste(dataset, "chromosome", chromosome))
+```
+
+
+
+
+
+
+
+
