@@ -52,7 +52,7 @@ chrom
 YAML config file used for analyses.
 
 ``` {r yaml, echo = TRUE}
-yaml = read_yaml(paste0(wdirpop, "/", dataset, ".", chromosome,".bpen", bpen, ".config.yaml"))
+yaml = read_yaml(paste0(wdirpop, "data/", dataset, ".", chromosome,".bpen", bpen, ".config.yaml"))
 
 yaml
 ```
@@ -198,6 +198,219 @@ chromoqc(chrom, dp.alpha = 66)
 # Tabular summary
 head(chrom@var.info)
 head(chrom@win.info)
+```
+
+
+
+# MCMC CONVERGENCE
+
+
+
+```{r, echo=FALSE}
+cat("Dataset:", dataset, "\n")
+cat("Chromosome:", chromosome, "\n")
+
+yaml_config = read_yaml(paste0("data/", dataset, "/config.yaml"))
+burnin = yaml_config$ldhat.burn
+sampling = yaml_config$interval.samp
+iterations = yaml_config$interval.iter
+
+cat("Burnin:", burnin,"\n",
+    "Sampling every", sampling,"iterations\n",
+    "Total iterations of the chain:", iterations,"\n")
+```
+
+## Convergence of the MCMC chain
+
+
+```{r mcmcChain, echo = FALSE}
+cat("Loading MCMC sampling chain.\n")
+mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
+mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
+# One line per position
+# Each column is a MCMC iteration
+# Do the mean of each column (minus first one) and check if mean posterior is stable across iterations
+mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
+                            posone = as.numeric(mcmc.chain[1,-1]),
+                            pos1000 = as.numeric(mcmc.chain[1000,-1]),
+                            posterior = apply(mcmc.chain[,-1], 2, median),
+                            totalgenetic = apply(mcmc.chain[,-1], 2, sum))
+
+require(ggplot2)
+require(ggpubr)
+# Median of all positions
+p1 = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
+  geom_line() +
+  xlab("Sample") + ylab("Median posterior")
+p1b = ggplot(mean.posterior, aes(x = posterior)) +
+  geom_density() +
+  xlab("Median posterior")
+# One position
+p2 = ggplot(mean.posterior, aes(x = iteration, y = posone)) +
+  geom_line() +
+  xlab("Sample") + ylab("Posterior position one")
+p2b = ggplot(mean.posterior, aes(x = posone)) +
+  geom_density() +
+  xlab("Posterior position one")
+
+
+# ggplot(mean.posterior, aes(x = iteration, y = pos1000)) +
+#   geom_line()
+
+# Total genetic distance ~ sample (iteration)
+p3 = ggplot(mean.posterior, aes(x = iteration, y = totalgenetic)) +
+  geom_line() +
+  xlab("Sample") + ylab("Total genetic distance")
+p3b = ggplot(mean.posterior, aes(x = totalgenetic)) +
+  geom_density() +
+  xlab("Total genetic distance")
+
+
+p = ggarrange(p1, p1b, p2, p2b, p3, p3b, nrow = 3, ncol = 2, labels = "AUTO")
+ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".singleChain.jpeg", sep = ""),
+       plot = p, device = jpeg(), width = 14, height = 12, dpi = 300)
+
+rm(mcmc.chain)
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Sampling chains and posterior distributions of the chians used to estimate Rho."}
+plot(p)
+```
+
+
+## LDhat builtin diagnostic tools
+
+
+```{r sourceLDhat, echo=FALSE}
+# Summary by LDhat built-in functions
+# HEAVY Computations -> Server side to produce diagnostic figures
+source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
+```
+
+
+```{r defineSummarise, echo = FALSE}
+# Custom implementation of summarise.interval() to return figures output
+burn.in = burnin
+
+# rates.file = "data/test_ldhat_rates.txt"
+
+summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.file=FALSE) {
+  library(ggplot2)
+  library(ggpubr)
+  x = read.table(rates.file, skip=1, fill=T);
+  
+  maplength = data.frame(sample = (1:length(x[,1])))
+  maplength$length = x[,1]
+  
+  chains = as.matrix(x[,-1]);
+  
+  low = as.integer(nrow(x)*burn.in/100);
+  
+  cat("\n\nSummarise output from MCMC estimation of recombination rates in INTERVAL (LDhat 2.1)\n\n");
+  cat(paste("Number of SNPs = ", ncol(x), "\n", sep=""));
+  cat(paste("Number of samples = ", nrow(x), "\n", sep=""));
+  cat(paste("Burn-in period = ", low, " samples\n", sep=""));
+  
+  p1a = ggplot2::ggplot(data = maplength, aes(x = sample, y = length)) +
+    geom_step() +
+    xlab("Sample") + ylab("Total map length") +
+    ggtitle("Mixing of total map length")
+  
+  data = expand.grid(X=c(1:nrow(x)), Y=c(1:(ncol(x)-1)))
+  data$Z = unlist(c(log(x[,2:ncol(x)])))
+  p1b = ggplot2::ggplot(data = data, aes(x = X, y = Y, fill = Z)) +
+    geom_tile() +
+    scale_color_viridis_c() +
+    xlab("Sample") + ylab("log(rate) at SNP") +
+    ggtitle("Mixing of rates")
+  
+  p1 = ggpubr::ggarrange(p1a, p1b, ncol = 2, widths = c(2, 3))
+  
+  # plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
+  #      main="Mixing of total map length");
+  # image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
+  #       ylab="log(rate) at SNP", main="Mixing of rates");
+  # 
+  means<-apply(x[low:nrow(x),], 2, mean, na.rm=T);
+  q.95<-apply(x[low:nrow(x),], 2, quantile, probs=c(0.025, 0.5, 0.975), na.rm=T);
+  
+  cat(paste("\nMean posterior total map length (4Ner) = ", signif(means[1], 4), "\n", sep=""));
+  
+  if (locs.file==FALSE) {pos<-c(1:ncol(x)); xlab<-"Position (SNP)";}
+  else {pos<-as.vector(as.matrix(read.table(locs.file, as.is=T, skip=1))); xlab<-"Position"}
+  
+  df = data.frame(position = pos[1:(length(pos)-1)],
+                  mean_rate = means[2:length(means)],
+                  lower_rate = q.95[1,2:length(means)],
+                  upper_rate = q.95[3,2:length(means)])
+  
+  p2 = ggplot2::ggplot(data = df, aes(x = position, y = mean_rate)) +
+    geom_step(aes(y = lower_rate), colour = "Gray") +
+    geom_step(aes(y = upper_rate), colour = "Gray") +
+    geom_step(aes(y = mean_rate), colour = "Black") +
+    xlab("Position") + ylab("Posterior mean rate") +
+    ggtitle("Posterior mean rates")
+  
+  # plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5), 	
+  #      xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
+  # lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
+  # lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75), lty="dotted");
+  
+  op<-cbind(means, t(q.95));
+  colnames(op)<-c("Mean", "q2.5", "Median", "q97.5");
+  
+  return(list(p1, p2, op));
+}
+
+```
+
+
+```{r summariseInterval, echo=FALSE}
+# mcmc.file = "data/test_ldhat_rates.txt.gz"
+mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
+# locs.file = "data/Arabidopsis_thaliana_1001genomes/K1.pop1/ldhat/"
+locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
+figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burn.in, locs.file = locs.file)
+```
+
+
+```{r saveFig, echo=FALSE}
+saveRDS(figures, file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".", bpen, ".MCMCsummary.Rds", sep = ""))
+```
+
+
+
+MCMC rates for each interval are mixed. Each line of panel B is the chain of a single interval. If there is convergence, all single interval chains should be stationary (no value/color fluctuation).
+
+
+```{r plotFig1, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Mixing rates of the sampling chain."}
+plot(figures[[1]])
+ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""),
+       plot = figures[[1]], device = jpeg(), width = 14, height = 8, dpi = 300)
+```
+
+
+
+The mean posterior rate is the mean rate at each SNP position among all iterations of the sampling chain. If the sampling chain is stationary, the mean rate should be similar to the estimated recombination landscape.
+
+```{r plotFig2, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Posterior rates of the sampling chain."}
+plot(figures[[2]])
+ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".posteriorRates.jpeg", sep = ""),
+       plot = figures[[2]], device = jpeg(), width = 14, height = 12, dpi = 300)
+```
+
+
+```{r plotLandscape, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Estimated recombination landscape."}
+res.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt.gz", sep = "")
+res = read.table(gzfile(res.file), header = F, skip = 2)
+colnames(res) = c("loci", "mean_rho", "median_rho", "lower", "upper")
+res$loci = res$loci/10
+
+landscape = ggplot(res, aes(x = loci, y = mean_rho)) +
+  geom_line() +
+  xlab("Genomic position (Mb)") + ylab("Mean recombination rate")
+
+plot(landscape)
 ```
 
 
