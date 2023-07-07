@@ -11,9 +11,8 @@
 . /local/env/envsingularity-3.8.5.sh
 . /local/env/envconda.sh
 
-path="LDhat-snakemake-pipeline"
-datadir=$(cat $path/datadir.conf)
-scratchdir=$(cat $path/scratchdir.conf)
+datadir=$(cat datadir.conf)
+scratchdir=$(cat scratchdir.conf)
 dataset=${1}
 chrom=${2}
 randomid=$(echo $RANDOM | md5sum | head -c 20; echo;)
@@ -26,7 +25,7 @@ export OMP_NUM_THREADS=$ncores
 echo "Create directory ${dataset}_${chrom}_${randomid}"
 
 echo "Build environment"
-git clone https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git $scratchdir/${dataset}_${chrom}_${randomid}
+git clone --branch pairwise https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git $scratchdir/${dataset}_${chrom}_${randomid}
 cd $scratchdir/${dataset}_${chrom}_${randomid}
 singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
 singularity pull ldhat.sif docker://tombrazier/ldhat:v1.0
@@ -51,10 +50,10 @@ test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldho
 test -f $scratchdir/${dataset}_${chrom}_${randomid}/data/${dataset}/K*.pop*/ldhot/*.hotspots.txt.gz && echo "LDhot hotspots exists"
 
 echo "Clean temporary files"
-bash clean.sh $dataset
+#bash clean.sh $dataset
 
 echo "Sync results back"
-rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
+#rsync -ah $scratchdir/${dataset}_${chrom}_${randomid}/data/$dataset/ $datadir/data/$dataset/
 
 echo "Clean scratch"
 #rm -rf $scratchdir/${dataset}_${chrom}_${randomid}
