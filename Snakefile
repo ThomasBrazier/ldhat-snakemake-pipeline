@@ -33,8 +33,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
-        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html"
+        target = expand("{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen)
     shell:
         "echo 'Finished'"
 
