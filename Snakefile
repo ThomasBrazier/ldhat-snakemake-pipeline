@@ -490,7 +490,7 @@ elif config["large_sample"] == "no":
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
-         output:
+        output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.new_lk.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
