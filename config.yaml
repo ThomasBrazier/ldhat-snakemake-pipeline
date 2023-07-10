@@ -16,11 +16,13 @@ maxk: 4 # Pop structure analysis: Max number of clusters to explore with FastSTR
 K: 1 # The number of clusters K to retain
 pop: 1 # The cluster (i.e. population) to sample
 shapeitWindow: 2 # Window size in Mb for phasing with ShapeIt2
+# LDhat
 mu: 1.28e-8 # The population mutation rate
 theta: 0.001 # The theta value set in LDhat
 ploidy: 1
 pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
+pairwise: "yes" # Whether to run pairwise (yes) or not (no)
 cut_size: 2000 # Size of chunks to parallelize LDhat (number of SNPs)
 cut_overlap: 200 # Number of overlapping SNPs in each chunk
 interval.bpen: 5 # Block penalty in LDhat

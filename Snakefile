@@ -463,9 +463,10 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
             "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
         output:
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
+            if config["pairwise"] == "yes":
+                "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
+                "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
+                "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
             "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
         log:
             "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
@@ -474,7 +475,12 @@ elif config["large_sample"] == "no":
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
+            if [ {config[pairwise]} == "yes" ]
+            then
             singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
+            else
+            echo "pairwise==FALSE" > {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
+            fi
             """
 
 
