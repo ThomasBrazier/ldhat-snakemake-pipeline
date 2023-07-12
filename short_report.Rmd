@@ -3,7 +3,7 @@ title: "Data and Results Quality Report"
 date: "`r Sys.Date()`"
 output: html_document
 params:
-  vcf_file: ""
+  dataset: ""
   chromosome: ""
   bpen: ""
   wdirpop: ""
@@ -20,6 +20,7 @@ require(adegenet)
 require(poppr)
 require(ggplot2)
 require(yaml)
+require(ggpubr)
 ```
 
 
@@ -27,7 +28,7 @@ require(yaml)
 
 
 ```{r data, echo = TRUE}
-dataset = params$vcf_file
+dataset = params$dataset
 chromosome = params$chromosome
 bpen = params$bpen
 wdirpop = params$wdirpop
@@ -41,7 +42,7 @@ vcf = read.vcfR(vcf_file, verbose = FALSE)
 vcf=vcf[which(vcf@fix[,1] == chromosome)]
 
 # Create a chromR object.
-chrom = create.chromR(name = chr, vcf = vcf_subset)
+chrom = create.chromR(name = chromosome, vcf = vcf)
 # Summary of the chromosome
 chrom
 
@@ -52,7 +53,7 @@ chrom
 YAML config file used for analyses.
 
 ``` {r yaml, echo = TRUE}
-yaml = read_yaml(paste0(wdirpop, "data/", dataset, ".", chromosome,".bpen", bpen, ".config.yaml"))
+yaml = read_yaml(paste0(wdirpop, "/", dataset, ".", chromosome,".bpen", bpen, ".config.yaml"))
 
 yaml
 ```
@@ -156,20 +157,8 @@ sum(sumallele==0)
 
 
 
-<!-- Homozygosity. -->
-
 
 ```{r chromosomes, echo = TRUE}
-cat("===================================\n",
-    "        Analysing chromosome", chr, "\n",
-    "===================================\n")
-# Susbet for the chromosome of interest
-vcf_subset=vcf[which(vcf@fix[,1] == chr)]
-# Create a chromR object.
-chrom = create.chromR(name = chr, vcf = vcf_subset)
-# Summary of the chromosome
-chrom
-
 # Distribution of SNPs in the genome
 hist(as.numeric(chrom@vcf@fix[,2])/10^6, breaks = 1000,
      main = "Distribution of SNPs in the genome",
@@ -210,10 +199,9 @@ head(chrom@win.info)
 cat("Dataset:", dataset, "\n")
 cat("Chromosome:", chromosome, "\n")
 
-yaml_config = read_yaml(paste0("data/", dataset, "/config.yaml"))
-burnin = yaml_config$ldhat.burn
-sampling = yaml_config$interval.samp
-iterations = yaml_config$interval.iter
+burnin = yaml$ldhat.burn
+sampling = yaml$interval.samp
+iterations = yaml$interval.iter
 
 cat("Burnin:", burnin,"\n",
     "Sampling every", sampling,"iterations\n",
@@ -236,9 +224,7 @@ mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
                             posterior = apply(mcmc.chain[,-1], 2, median),
                             totalgenetic = apply(mcmc.chain[,-1], 2, sum))
 
-require(ggplot2)
-require(ggpubr)
-# Median of all positions
+
 p1 = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
   geom_line() +
   xlab("Sample") + ylab("Median posterior")
@@ -290,9 +276,6 @@ source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
 
 ```{r defineSummarise, echo = FALSE}
 # Custom implementation of summarise.interval() to return figures output
-burn.in = burnin
-
-# rates.file = "data/test_ldhat_rates.txt"
 
 summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.file=FALSE) {
   library(ggplot2)
@@ -366,17 +349,14 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
 
 
 ```{r summariseInterval, echo=FALSE}
-# mcmc.file = "data/test_ldhat_rates.txt.gz"
-mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
-# locs.file = "data/Arabidopsis_thaliana_1001genomes/K1.pop1/ldhat/"
+mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt", sep = "")
 locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
-figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burn.in, locs.file = locs.file)
+#figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burnin, locs.file = locs.file)
+source("source/coalescent.R")
+summarise.interval=function(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
 ```
 
 
-```{r saveFig, echo=FALSE}
-saveRDS(figures, file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".", bpen, ".MCMCsummary.Rds", sep = ""))
-```
 
 
 

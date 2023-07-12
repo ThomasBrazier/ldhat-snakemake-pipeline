@@ -10,7 +10,7 @@ library(vcfR)
 library(adegenet)
 library(poppr)
 
-rmarkdown::render('vcf_qualityreport.Rmd',
+rmarkdown::render('short_report.Rmd',
                   params = list(dataset = dataset,
                                 chromosome = chromosome,
                                 bpen = bpen,

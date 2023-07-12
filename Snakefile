@@ -455,33 +455,45 @@ elif config["large_sample"] == "no":
             """
 
 
-    rule pairwise:
-        """
-        Estimate pairwise recombination rates and theta per site with LDhat
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
-        output:
-            if config["pairwise"] == "yes":
+
+    if config["pairwise"] == "yes":
+        rule pairwise:
+            """
+            Estimate pairwise recombination rates and theta per site with LDhat
+            """
+            input:
+                "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+                "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+            output:
                 "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
                 "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
                 "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
-        log:
-            "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
-        shell:
+                "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
+            log:
+                "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+            shell:
+                """
+                iter={config[interval.iter]}
+                samp={config[interval.samp]}
+                bpen={config[interval.bpen]}
+                singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
+                """
+    elif config["pairwise"] == "no":
+        rule no_pairwise:
             """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            if [ {config[pairwise]} == "yes" ]
-            then
-            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
-            else
-            echo "pairwise==FALSE" > {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
-            fi
+            Estimate pairwise recombination rates and theta per site with LDhat
             """
+            input:
+                "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+                "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+            output:
+                "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
+            log:
+                "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+            shell:
+                """
+                echo 'pairwise = FALSE' > {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
+                """
 
 
     rule interval:
@@ -519,15 +531,14 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.output.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-	        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.output.txt"
+	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
         shell:
             """
             burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}. | {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.ouput.txt
+            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
     	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
@@ -542,8 +553,7 @@ rule LDhot:
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.stat.output.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
@@ -571,15 +581,22 @@ rule shortReport:
     input:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt"
     output:
-        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html"
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html",
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml",
+        temporary("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz")
+    conda:
+        "envs/Renv.yaml"
     shell:
         """
+        gunzip --keep {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml
         Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
     	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
+        rm {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
         """
 
 
