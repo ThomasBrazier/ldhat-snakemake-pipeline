@@ -592,7 +592,7 @@ rule shortReport:
         "envs/Renv.yaml"
     shell:
         """
-        gunzip --keep {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz
+        gunzip --stdout {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml
         Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
     	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
