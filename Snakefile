@@ -367,7 +367,8 @@ if config["large_sample"] == "yes":
         input:
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
         output:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
         log:
             "{wdirpop}/logs/{dataset}.concatenate.{chrom}.bpen{bpen}.log"
         shell:
@@ -405,6 +406,7 @@ if config["large_sample"] == "yes":
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
             bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
+            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             """
 
 
@@ -506,7 +508,8 @@ rule LDhot:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
-	"{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
     threads: workflow.cores
     log:
@@ -517,6 +520,7 @@ rule LDhot:
         singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
 	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
+	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
         """
