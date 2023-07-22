@@ -545,78 +545,6 @@ elif config["large_sample"] == "no":
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
 	    """
 
-
-    rule rhomap:
-        """
-        Use rhomap to infer recombination rates in presence of hotspots
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
-        output:
-            "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt",
-            "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.output.txt"
-        log:
-            "{wdirpop}/logs/{dataset}.ldhatrhomap.{chrom}.bpen{bpen}.log"
-        shell:
-            """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif rhomap -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -its $iter -bpen $bpen -samp $samp -burn $burn -seed {config[seed]} -prefix /data/{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.output.txt
-            """
-
-    rule stat_rhomap:
-        """
-        Compute statistics on rhomap results
-        """
-        input:
-            "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt"
-        output:
-            "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt"
-        log:
-            "{wdirpop}/logs/{dataset}.rhomapstat.{chrom}.bpen{bpen}.log"
-        shell:
-            """
-            burn={config[ldhat.burn]}
-            singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.
-	    """
-
-
-
-
-if config["rhomap4hotspots"] == "yes":
-    rule LDhotRhomap:
-        """
-        Infer recombination hotspots
-        LDhot
-        """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
-            "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt"
-        output:
-    	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-    	    "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-            "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
-            "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt",
-            temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
-        threads: workflow.cores
-        log:
-            "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.ldhot.log"
-        shell:
-            """
-            nsim={config[ldhot.nsim]}
-            singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt
-            singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt
-            gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-            gzip -f {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt
-    	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
-    	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
-            """
-elif config["rhomap4hotspots"] == "no":
     rule LDhot:
         """
         Infer recombination hotspots
@@ -628,20 +556,20 @@ elif config["rhomap4hotspots"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
         output:
     	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-    	    "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
             "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
             "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt",
             temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
         threads: workflow.cores
         log:
             "{wdirpop}/logs/{dataset}.{chrom}.bpen{bpen}.ldhot.log"
+        conda:
+            "envs/gzip.yaml"
         shell:
             """
             nsim={config[ldhot.nsim]}
             singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt
             singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} | tee {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt
-        	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-            gzip -f {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt
+            gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
     	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
     	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
             """
@@ -654,25 +582,23 @@ rule shortReport:
     input:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-        "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt",
-        "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt",
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.output.txt",
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.summary.output.txt"
     output:
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.html",
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
-        "{wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
     conda:
-        "envs/Renv.yaml"
+        "envs/Renv.yaml",
+        "envs/gzip.yaml"
     shell:
         """
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml
         Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
     	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
-        gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
-        gzip {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt
+        gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+        gzip -f {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt
         """
 
 

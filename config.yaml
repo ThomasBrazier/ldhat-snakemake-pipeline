@@ -30,7 +30,6 @@ interval.bpen: 5 # Block penalty in LDhat
 interval.samp: 5000 # Sample every n iterations within the MCMC chain
 interval.iter: 10000000 # Total number of iterations to run the MCMC chain
 ldhat.burn: 200 # The size of the burnin (number of sampled iterations)
-rhomap4hotspots: "yes" # yes/no, whether to use rhomap (yes) or interval (no) for LDhot
 ldhotseed: 42 # Random seed just for LDhot
 ldhot.nsim: 100 # Number of si mulations used to assess the significance of a hotspot in LDhot
 ldhot.hotdist: 1.5 # Size +- around hotspot centre (kb)
