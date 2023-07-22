@@ -590,8 +590,7 @@ rule shortReport:
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
     conda:
-        "envs/Renv.yaml",
-        "envs/gzip.yaml"
+        "envs/Renv.yaml"
     shell:
         """
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml

@@ -16,3 +16,4 @@ dependencies:
   - r-reshape
   - r-ggplot2
   - r-yaml
+  - gzip=1.10
