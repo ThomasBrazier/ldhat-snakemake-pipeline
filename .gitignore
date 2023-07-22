@@ -8,6 +8,9 @@ data/
 .snakemake/
 *.conf
 *.tar.gz
+*.~lock*
+Roadmap.ods
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
