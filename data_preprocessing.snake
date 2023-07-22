@@ -79,7 +79,7 @@ rule trimming_vcf:
         bcftools norm -d all {wdir}/trimmed.vcf.gz -o {wdir}/trimmed.vcf
         rm {wdir}/trimmed.vcf.gz
         # Subset N random SNPs (default=100,000)
-        N=100000
+        N={config[N.snp.structure]}
         cat {wdir}/trimmed.vcf | grep '^#' > {wdir}/new_vcf.vcf
         cat {wdir}/trimmed.vcf | grep -v '^#' | shuf -n $N  >> {wdir}/new_vcf.vcf
         rm {wdir}/trimmed.vcf

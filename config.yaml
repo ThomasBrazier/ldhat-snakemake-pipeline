@@ -15,6 +15,7 @@ subset: 40 # Number of diploid individuals to randomly subset
 maxk: 4 # Pop structure analysis: Max number of clusters to explore with FastSTRUCTURE
 K: 1 # The number of clusters K to retain
 pop: 1 # The cluster (i.e. population) to sample
+N.snp.structure: 100000 # The max number of SNPs to randomly sample for the STRUCTURE analysis. 100i,000 is generally enough.
 shapeitWindow: 2 # Window size in Mb for phasing with ShapeIt2
 # LDhat
 mu: 1.28e-8 # The population mutation rate
