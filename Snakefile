@@ -533,7 +533,7 @@ elif config["large_sample"] == "no":
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
 	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
         shell:
@@ -541,7 +541,6 @@ elif config["large_sample"] == "no":
             burn={config[ldhat.burn]}
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
-    	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
 	    """
 
@@ -597,7 +596,6 @@ rule shortReport:
         Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
     	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
         gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
-        gzip -f {wdirpop}/rhomap/{dataset}.{chrom}.bpen{bpen}.rates.txt
         """
 
 

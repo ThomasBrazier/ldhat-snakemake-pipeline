@@ -213,8 +213,8 @@ cat("Burnin:", burnin,"\n",
 
 ```{r mcmcChain, echo = FALSE}
 cat("Loading MCMC sampling chain.\n")
-mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
-mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
+mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt", sep = "")
+mcmc.chain = read.table(mcmc.file, header = F, skip = 1)
 # One line per position
 # Each column is a MCMC iteration
 # Do the mean of each column (minus first one) and check if mean posterior is stable across iterations
