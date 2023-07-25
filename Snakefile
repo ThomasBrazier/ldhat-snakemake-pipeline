@@ -368,7 +368,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/ldhat/{dataset}.{chrom}/stat_bpen{bpen}.done"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
+            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.concatenate.{chrom}.bpen{bpen}.log"
         shell:
@@ -406,7 +406,7 @@ if config["large_sample"] == "yes":
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
             bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
-            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.rates.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+            gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             """
 
 
@@ -492,7 +492,7 @@ elif config["large_sample"] == "no":
             burn={config[ldhat.burn]}
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
-	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+    	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
 	    """
 
