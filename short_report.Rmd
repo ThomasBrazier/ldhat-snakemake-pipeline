@@ -353,7 +353,7 @@ mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, "
 locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
 #figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burnin, locs.file = locs.file)
 source("source/coalescent.R")
-summarise.interval=function(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
+summarise.interval(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
 ```
 
 
