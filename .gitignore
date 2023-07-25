@@ -9,6 +9,10 @@ data/
 *.conf
 *.tar.gz
 *.pdf
+.~lock.Roadmap.ods#
+Roadmap.ods
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
