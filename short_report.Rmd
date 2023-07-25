@@ -351,9 +351,9 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
 ```{r summariseInterval, echo=FALSE}
 mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt", sep = "")
 locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
-#figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burnin, locs.file = locs.file)
-source("source/coalescent.R")
-summarise.interval(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
+figures = summarise.interval.figure(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
+#source("source/coalescent.R")
+#summarise.interval(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
 ```
 
 
