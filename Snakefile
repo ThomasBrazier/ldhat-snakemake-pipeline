@@ -532,8 +532,7 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.output.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
+	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
         shell:
@@ -594,7 +593,7 @@ rule shortReport:
         """
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.config.yaml
         Rscript short_report.R {dataset} {chrom} {bpen} {wdirpop}
-    	mv shortreport.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
+    	mv short_report.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.html
         gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
         """
 

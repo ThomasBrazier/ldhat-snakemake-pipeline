@@ -4,7 +4,7 @@
 #SBATCH --mem=120GB
 #SBATCH --cpus-per-task=16
 #SBATCH --time=25-60:00:00
-#SBATCH --job-name=LDmap
+#SBATCH --job-name=pairwise
 
 # Load env
 . /local/env/envsnakemake-6.0.5.sh

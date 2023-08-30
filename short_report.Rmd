@@ -350,10 +350,8 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
 
 ```{r summariseInterval, echo=FALSE}
 mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt", sep = "")
-locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
+locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".", bpen, ".ldhat.locs", sep = "")
 figures = summarise.interval.figure(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
-#source("source/coalescent.R")
-#summarise.interval(rates.file = mcmc.file, burn.in = burnin, locs.file = locs.file)
 ```
 
 
@@ -366,7 +364,7 @@ MCMC rates for each interval are mixed. Each line of panel B is the chain of a s
 ```{r plotFig1, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Mixing rates of the sampling chain."}
 plot(figures[[1]])
 ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""),
-       plot = figures[[1]], device = jpeg(), width = 14, height = 8, dpi = 300)
+plot = figures[[1]], device = jpeg(), width = 14, height = 8, dpi = 300)
 ```
 
 
@@ -376,7 +374,7 @@ The mean posterior rate is the mean rate at each SNP position among all iteratio
 ```{r plotFig2, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Posterior rates of the sampling chain."}
 plot(figures[[2]])
 ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".posteriorRates.jpeg", sep = ""),
-       plot = figures[[2]], device = jpeg(), width = 14, height = 12, dpi = 300)
+plot = figures[[2]], device = jpeg(), width = 14, height = 12, dpi = 300)
 ```
 
 
@@ -401,7 +399,7 @@ plot(landscape)
 ``` {r, echo=F, include=F}
 # {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
 
-mapfile = paste0(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt")
+mapfile = paste0(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt.gz")
 
 map = read.table(gzfile(mapfile), header = T)
 # Put positions in bp
@@ -415,14 +413,14 @@ map$end = c((map$Loci[-1] - 1), 0)
 # map$end = (map$Loci - 1)
 map = head(map, -1)
 # Combine
-map = cbind(set, chromosome, map)
+map = cbind(dataset, chromosome, map)
 ```
 
 
 ```{r}
-ggplot(ldmap, aes(x = end/10^6, y = Mean_rho)) +
+ggplot(map, aes(x = end/10^6, y = Mean_rho)) +
         geom_line() +
-        xlab("Genomic position (Mb)") + ylab("Mean Rho/kb") +
+        xlab("Genomic position (Mb)") + ylab("Mean rho/kb") +
         ggtitle(paste(dataset, "chromosome", chromosome))
 ```
 
