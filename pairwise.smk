@@ -93,5 +93,5 @@ rule convert:
             iter={config[interval.iter]}
             samp={config[interval.samp]}
             bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
+            echo -e "0\n0\n0\n0\n0" | singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
             """
