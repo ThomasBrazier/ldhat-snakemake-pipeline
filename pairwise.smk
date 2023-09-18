@@ -6,21 +6,21 @@ Snakemake pipeline to estimate fine-scale recombination maps from polymorphism d
 Configuration of the analysis
 i.e. dataset, name of chromosome, population to sample
 """
-include: "rules/config.smk"
+include: "config.smk"
 
 rule all:
     """
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/{dataset}.{chrom}.bpen{bpen}.outfile.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen)
+        target = expand("{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen)
     shell:
         "echo 'Finished'"
 
 
 
-include: "rules/sampling.smk"
-include: "rules/phasing.smk"
+include: "sampling.smk"
+include: "phasing.smk"
 
 rule lkgen:
     """
@@ -74,24 +74,25 @@ rule convert:
         """
 
 
-    rule pairwise:
+rule pairwise:
+    """
+    Estimate pairwise recombination rates and theta per site with LDhat
+    """
+    input:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
+    output:
+        "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
+    threads: workflow.cores
+    log:
+        "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+    shell:
         """
-        Estimate pairwise recombination rates and theta per site with LDhat
+        iter={config[interval.iter]}
+        samp={config[interval.samp]}
+        bpen={config[interval.bpen]}
+        singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
         """
-        input:
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
-            "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
-        output:
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.outfile.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.fits.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.window_out.txt",
-            "{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt"
-        log:
-            "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
-        shell:
-            """
-            iter={config[interval.iter]}
-            samp={config[interval.samp]}
-            bpen={config[interval.bpen]}
-            singularity exec --bind $PWD:/data ldhat.sif pairwise -seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt -prefix /data/{wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}. | tee {wdirpop}/pairwise/{dataset}.{chrom}.bpen{bpen}.output.txt
-            """

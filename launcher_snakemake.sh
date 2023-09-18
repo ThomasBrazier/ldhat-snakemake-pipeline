@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
 #SBATCH --mail-type=all
-#SBATCH --mem=120GB
+#SBATCH --mem=360GB
 #SBATCH --cpus-per-task=16
 #SBATCH --time=25-60:00:00
 #SBATCH --job-name=LDmap
