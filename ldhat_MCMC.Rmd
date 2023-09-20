@@ -18,8 +18,8 @@ require(rmarkdown)
 require(vcfR)
 require(adegenet)
 require(poppr)
-library(ggplot2)
-library(ggpubr)
+require(ggplot2)
+require(ggpubr)
 library(yaml)
 library(reshape2)
 # library(MCMCglmm)
@@ -35,7 +35,7 @@ ggplot2::theme_update(axis.line = element_line(colour = "black"),
         axis.title.x = element_text(color="black", size=14),
         axis.title.y = element_text(color="black", size=14),
         axis.text=element_text(size=14, colour="black"),
-        legend.key = element_rect(fill = "white", size = 1),
+        legend.key = element_rect(fill = "white", linewidth = 1),
         legend.key.height = unit(2,"line"),
         legend.key.width = unit(5,"line"),
         legend.text=element_text(size=14),
@@ -47,6 +47,12 @@ wdirpop = params$wdirpop
 dataset = params$dataset
 chromosome = params$chromosome
 bpen = params$bpen
+
+# TEST ONLY
+wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
+dataset = "Arabidopsis_thaliana_1001genomes"
+chromosome = "1"
+bpen = 5
 ```
 
 
@@ -87,8 +93,7 @@ mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
                             posterior = apply(mcmc.chain[,-1], 2, median),
                             totalgenetic = apply(mcmc.chain[,-1], 2, sum))
 
-require(ggplot2)
-require(ggpubr)
+
 # Median of all positions
 p1 = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
   geom_line() +
@@ -265,124 +270,124 @@ plot(landscape)
 
 
 
-# Convergence over independent runs (10 runs in 'mcmc')
+<!-- # Convergence over independent runs (10 runs in 'mcmc') -->
 
-Strangely, LDhat does not require a random seed. I compared ten independent runs computed on the exact same data (population, individuals and markers), just launched ten times with LDhat.
-
-
-## Compare traceplots of individual chains
-
-Cpmpare the ten traceplots of independent runs.
+<!-- Strangely, LDhat does not require a random seed. I compared ten independent runs computed on the exact same data (population, individuals and markers), just launched ten times with LDhat. -->
 
 
-```{r tenTraceplots, echo = FALSE}
-cat("Plotting ten independent MCMC sampling chains.\n")
+<!-- ## Compare traceplots of individual chains -->
 
-plots = list()
-
-posterior = data.frame(run = character(),
-                       iter = numeric(),
-                       mean.posterior = numeric())
-
-for (i in 1:10) {
-  mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "")
-  mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1)
-  mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1),
-                              posone = as.numeric(mcmc.chain[1,-1]),
-                              pos1000 = as.numeric(mcmc.chain[1000,-1]),
-                              posterior = apply(mcmc.chain[,-1], 2, mean),
-                              totalgenetic = apply(mcmc.chain[,-1], 2, sum))
-  
-  tmp = data.frame(run = i,
-                       iter = mean.posterior$iteration,
-                       mean.posterior = mean.posterior$posterior)
-  posterior = rbind(posterior, tmp)
-  
-  p = ggplot(mean.posterior, aes(x = iteration, y = posterior)) +
-  geom_line() +
-  xlab("Sample") + ylab("Mean posterior") +
-  ggtitle(paste("Run #", i, sep = ""))
-  plots[[i]] = p
-  rm(mcmc.chain)
-}
-
-```
-
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Mean posterior rates of ten independent MCMC runs."}
-for (i in 1:10) {
-  plot(plots[[i]])
-}
-
-rm(plots)
-```
+<!-- Cpmpare the ten traceplots of independent runs. -->
 
 
+<!-- ```{r tenTraceplots, echo = FALSE} -->
+<!-- cat("Plotting ten independent MCMC sampling chains.\n") -->
 
-## Correlation between posterior rates
+<!-- plots = list() -->
 
+<!-- posterior = data.frame(run = character(), -->
+<!--                        iter = numeric(), -->
+<!--                        mean.posterior = numeric()) -->
 
-```{r, echo=FALSE}
-x = posterior$mean.posterior
-groups = as.factor(posterior$run)
+<!-- for (i in 1:10) { -->
+<!--   mcmc.file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".run.", i, ".rates.txt.gz", sep = "") -->
+<!--   mcmc.chain = read.table(gzfile(mcmc.file), header = F, skip = 1) -->
+<!--   mean.posterior = data.frame(iteration = 1:(dim(mcmc.chain)[2] - 1), -->
+<!--                               posone = as.numeric(mcmc.chain[1,-1]), -->
+<!--                               pos1000 = as.numeric(mcmc.chain[1000,-1]), -->
+<!--                               posterior = apply(mcmc.chain[,-1], 2, mean), -->
+<!--                               totalgenetic = apply(mcmc.chain[,-1], 2, sum)) -->
 
-series = data.frame(run.1 = x[which(groups == "1")],
-                    run.2 = x[which(groups == "2")],
-                    run.3 = x[which(groups == "3")],
-                    run.4 = x[which(groups == "4")],
-                    run.5 = x[which(groups == "5")],
-                    run.6 = x[which(groups == "6")],
-                    run.7 = x[which(groups == "7")],
-                    run.8 = x[which(groups == "8")],
-                    run.9 = x[which(groups == "9")],
-                    run.10 = x[which(groups == "10")])
+<!--   tmp = data.frame(run = i, -->
+<!--                        iter = mean.posterior$iteration, -->
+<!--                        mean.posterior = mean.posterior$posterior) -->
+<!--   posterior = rbind(posterior, tmp) -->
 
-# Function to add histograms
-# panel.hist <- function(x, ...) {
-#     usr <- par("usr")
-#     on.exit(par(usr))
-#     par(usr = c(usr[1:2], 0, 1.5))
-#     his <- hist(x, plot = FALSE)
-#     breaks <- his$breaks
-#     nB <- length(breaks)
-#     y <- his$counts
-#     y <- y/max(y)
-#     rect(breaks[-nB], 0, breaks[-1], y, col = rgb(0, 1, 1, alpha = 0.5), ...)
-#     # lines(density(x), col = 2, lwd = 2) # Uncomment to add density lines
-# }
+<!--   p = ggplot(mean.posterior, aes(x = iteration, y = posterior)) + -->
+<!--   geom_line() + -->
+<!--   xlab("Sample") + ylab("Mean posterior") + -->
+<!--   ggtitle(paste("Run #", i, sep = "")) -->
+<!--   plots[[i]] = p -->
+<!--   rm(mcmc.chain) -->
+<!-- } -->
 
-# See sources in https://epurdom.github.io/Stat131A/lectures/2018SpringLectures/04MultiVisual_forClassCode.html
-panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
-{
-    #from help of pairs
-    usr <- par("usr"); on.exit(par(usr))
-    par(usr = c(0, 1, 0, 1))
-    r <- abs(cor(x, y,use="pairwise.complete.obs"))
-    txt <- format(c(r, 0.123456789), digits = digits)[1]
-    txt <- paste0(prefix, txt)
-    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-    text(0.5, 0.5, txt, cex = cex.cor * r)
-}
+<!-- ``` -->
 
-panel.hist <- function(x, ...)
-{
-    #from help of pairs
-    usr <- par("usr"); on.exit(par(usr))
-    par(usr = c(usr[1:2], 0, 1.5) )
-    h <- hist(x, plot = FALSE)
-    breaks <- h$breaks; nB <- length(breaks)
-    y <- h$counts; y <- y/max(y)
-    rect(breaks[-nB], 0, breaks[-1], y)
-}
+<!-- ```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Mean posterior rates of ten independent MCMC runs."} -->
+<!-- for (i in 1:10) { -->
+<!--   plot(plots[[i]]) -->
+<!-- } -->
 
-```
+<!-- rm(plots) -->
+<!-- ``` -->
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten independent runs."}
-# Creating the scatter plot matrix
-pairs(series,
-      upper.panel = panel.cor,         # Disabling the upper panel
-      diag.panel = panel.hist)    # Adding the histograms
-```
+
+<!-- ## Correlation between posterior rates -->
+
+
+<!-- ```{r, echo=FALSE} -->
+<!-- x = posterior$mean.posterior -->
+<!-- groups = as.factor(posterior$run) -->
+
+<!-- series = data.frame(run.1 = x[which(groups == "1")], -->
+<!--                     run.2 = x[which(groups == "2")], -->
+<!--                     run.3 = x[which(groups == "3")], -->
+<!--                     run.4 = x[which(groups == "4")], -->
+<!--                     run.5 = x[which(groups == "5")], -->
+<!--                     run.6 = x[which(groups == "6")], -->
+<!--                     run.7 = x[which(groups == "7")], -->
+<!--                     run.8 = x[which(groups == "8")], -->
+<!--                     run.9 = x[which(groups == "9")], -->
+<!--                     run.10 = x[which(groups == "10")]) -->
+
+<!-- # Function to add histograms -->
+<!-- # panel.hist <- function(x, ...) { -->
+<!-- #     usr <- par("usr") -->
+<!-- #     on.exit(par(usr)) -->
+<!-- #     par(usr = c(usr[1:2], 0, 1.5)) -->
+<!-- #     his <- hist(x, plot = FALSE) -->
+<!-- #     breaks <- his$breaks -->
+<!-- #     nB <- length(breaks) -->
+<!-- #     y <- his$counts -->
+<!-- #     y <- y/max(y) -->
+<!-- #     rect(breaks[-nB], 0, breaks[-1], y, col = rgb(0, 1, 1, alpha = 0.5), ...) -->
+<!-- #     # lines(density(x), col = 2, lwd = 2) # Uncomment to add density lines -->
+<!-- # } -->
+
+<!-- # See sources in https://epurdom.github.io/Stat131A/lectures/2018SpringLectures/04MultiVisual_forClassCode.html -->
+<!-- panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) -->
+<!-- { -->
+<!--     #from help of pairs -->
+<!--     usr <- par("usr"); on.exit(par(usr)) -->
+<!--     par(usr = c(0, 1, 0, 1)) -->
+<!--     r <- abs(cor(x, y,use="pairwise.complete.obs")) -->
+<!--     txt <- format(c(r, 0.123456789), digits = digits)[1] -->
+<!--     txt <- paste0(prefix, txt) -->
+<!--     if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt) -->
+<!--     text(0.5, 0.5, txt, cex = cex.cor * r) -->
+<!-- } -->
+
+<!-- panel.hist <- function(x, ...) -->
+<!-- { -->
+<!--     #from help of pairs -->
+<!--     usr <- par("usr"); on.exit(par(usr)) -->
+<!--     par(usr = c(usr[1:2], 0, 1.5) ) -->
+<!--     h <- hist(x, plot = FALSE) -->
+<!--     breaks <- h$breaks; nB <- length(breaks) -->
+<!--     y <- h$counts; y <- y/max(y) -->
+<!--     rect(breaks[-nB], 0, breaks[-1], y) -->
+<!-- } -->
+
+<!-- ``` -->
+
+
+<!-- ```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Correlations between mean posterior rates of ten independent runs."} -->
+<!-- # Creating the scatter plot matrix -->
+<!-- pairs(series, -->
+<!--       upper.panel = panel.cor,         # Disabling the upper panel -->
+<!--       diag.panel = panel.hist)    # Adding the histograms -->
+<!-- ``` -->
 
 
 

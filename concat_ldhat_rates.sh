@@ -22,4 +22,3 @@ n_snps=$(cat bpen${bpen}.rates_noheader.txt | wc -l)
 echo "$n_snps	$n_snps" > bpen${bpen}.rates.txt
 cat bpen${bpen}.rates_noheader.txt >> bpen${bpen}.rates.txt
 mv bpen${bpen}.rates.txt $wdirpop/ldhat/${dataset}.${chromosome}.bpen${bpen}.rates.txt
-

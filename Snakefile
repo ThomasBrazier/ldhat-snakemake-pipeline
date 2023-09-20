@@ -404,7 +404,7 @@ if config["large_sample"] == "yes":
             echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
-            mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}/{dataset}.{chrom}.bpen{bpen}.res.txt
+            cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
             bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
             gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             """
