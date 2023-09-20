@@ -5,8 +5,6 @@ Test for convergence of LDhat MCMC chain
 Run only one chromosome
 """
 
-configfile: "config.yaml"
-
 """In addition to the configfile statement, config values can be overwritten via the command line"""
 dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
 chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' dataset
