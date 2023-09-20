@@ -31,7 +31,7 @@ rule all:
     One ring to rule them all
     """
     input:
-        expand("{wdirpop}/MCMC/{dataset}.ldhat_MCMC.html", wdirpop=wdirpop, dataset=dataset)
+        expand("{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html", wdirpop=wdirpop, dataset=dataset, bpen=bpen)
     shell:
         "echo 'MCMC convergence assessment: finished'"
 
@@ -46,11 +46,11 @@ rule MCMC_report:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         "{wdirpop}/ldhat/{dataset}.{chromosome}.ldhat.locs"
     output:
-        "{wdirpop}/MCMC/{dataset}.ldhat_MCMC.html"
+        "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
     conda:
         "envs/Renv.yaml"
     shell:
         """
         Rscript ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
-        mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.ldhat_MCMC.html
+        mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html
         """
