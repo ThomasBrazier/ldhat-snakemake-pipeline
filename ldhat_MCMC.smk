@@ -31,7 +31,7 @@ rule all:
     One ring to rule them all
     """
     input:
-        expand("{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html", wdirpop=wdirpop, dataset=dataset, chrom=chrom, bpen=bpen)
+        target = expand("{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html", wdirpop=wdirpop, dataset=dataset, chrom=chrom, bpen=bpen)
     shell:
         "echo 'MCMC convergence assessment: finished'"
 
