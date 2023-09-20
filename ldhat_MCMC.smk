@@ -44,7 +44,7 @@ rule MCMC_report:
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-        "{wdirpop}/ldhat/{dataset}.{chromosome}.ldhat.locs"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
     output:
         "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
     conda:
