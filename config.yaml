@@ -23,9 +23,21 @@ theta: 0.001 # The theta value set in LDhat
 ploidy: 1
 pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
-pairwise: "yes" # Whether to run pairwise (yes) or not (no)
+# Pairwise section
+# Do you wish to change grid over which to estimate likelihoods for (default = 100 points, 4Ner 0 - 101.0) (1/0) :0
+# Do you wish to carry out a sliding windows analysis? (yes=1/no=0):0
+# Print out table of Rmin values? (0=No, 1=Total only, 2=Full table):0 # Warning 2 can be long
+# Estimate 4Ner by moment method? (yes=1, no=0)0
+# Do you wish to test for recombination? (yes=1, no=0):
+pairwiseGrid: 0 # Change the grid?
+pairwiseSliding: 0 # Sliding windows?
+pairwiseRmin: 0 # Print out Rmin values?
+pairwiseMoment: 0 # Moment method?
+pairwiseTest: 0 # Test for recombination?
+# Splitting windows section
 cut_size: 2000 # Size of chunks to parallelize LDhat (number of SNPs)
 cut_overlap: 200 # Number of overlapping SNPs in each chunk
+# Interval section
 interval.bpen: 5 # Block penalty in LDhat
 interval.samp: 5000 # Sample every n iterations within the MCMC chain
 interval.iter: 10000000 # Total number of iterations to run the MCMC chain
