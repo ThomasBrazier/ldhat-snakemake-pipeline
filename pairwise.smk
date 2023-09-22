@@ -13,7 +13,7 @@ rule all:
     One ring to rule them all"
     """
     input:
-        target = expand("{wdirpop}/pairwise/{dataset}.{chrom}.outfile.txt",wdirpop=wdirpop,dataset=dataset,chrom=chrom)
+        target = expand("{wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv",wdirpop=wdirpop,dataset=dataset,chrom=chrom)
     shell:
         "echo 'Finished'"
 
@@ -127,3 +127,35 @@ rule pairwise:
         cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_*.outfile.txt > {wdirpop}/pairwise/{dataset}.{chrom}.outfile.txt
         cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_*.fit.txt > {wdirpop}/pairwise/{dataset}.{chrom}.fit.txt
         """
+
+
+rule summary:
+    """
+    Generate summary tables of pairwise results
+    """
+    input:
+        "{wdirpop}/pairwise/{dataset}.{chrom}.outfile.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.fits.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.window_out.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.output.txt"
+    output:
+        "{wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv"
+    shell:
+        """
+        echo "dataset\tchromosome\tstart\tend\tbatch\ttheta\trho\tlk" > {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
+        nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+        echo "nbatch = $nbatch"
+        for i in $(seq $nbatch); do
+        start=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | head -n 1 | awk '{ print $2 }')
+        end=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | tail -n 1 | awk '{ print $2 }')
+        theta_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Theta | awk '{ print $3 }')
+        rho_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{ print $5 }')
+        lk_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{ print $9 }')
+        echo "{dataset}\t{chrom}\${{batch}}\t{{start}}\t{{end}}\t{{theta}}\t{{rho}}\t{{lk}}" >> {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
+        done
+        """
+
+
+
+## TODO Lk matrix
+## TODO Summary report
