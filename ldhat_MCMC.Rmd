@@ -231,7 +231,7 @@ figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = bu
 
 
 ```{r saveFig, echo=FALSE}
-saveRDS(figures, file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".", bpen, ".MCMCsummary.Rds", sep = ""))
+saveRDS(figures, file = paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".MCMCsummary.Rds", sep = ""))
 ```
 
 
