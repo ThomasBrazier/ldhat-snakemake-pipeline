@@ -406,7 +406,6 @@ if config["large_sample"] == "yes":
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
             bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen}
-            gzip {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             """
 
 
