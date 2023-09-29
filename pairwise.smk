@@ -45,7 +45,7 @@ rule lkgen:
 	singularity exec --bind $PWD:/data ldhat.sif lkgen -prefix /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}. -lk /data/lk_files/lk_n100_t{config[theta]} -nseq $n
 	else
 	echo "Generate a new look-up table"
-	singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax {rhomax} -n_pts {n_pts} -theta {config[theta]} -prefix /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.
+	singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax {config[rhomax]} -n_pts {config[n_pts]} -theta {config[theta]} -prefix /data/{wdirpop}/pairwise/{dataset}.lookup.{chrom}.
 	fi
 	"""
 
