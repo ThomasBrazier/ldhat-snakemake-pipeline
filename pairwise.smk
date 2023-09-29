@@ -135,8 +135,7 @@ rule summary:
     """
     input:
         "{wdirpop}/pairwise/{dataset}.{chrom}.outfile.txt",
-        "{wdirpop}/pairwise/{dataset}.{chrom}.fits.txt",
-        "{wdirpop}/pairwise/{dataset}.{chrom}.window_out.txt",
+        "{wdirpop}/pairwise/{dataset}.{chrom}.fit.txt",
         "{wdirpop}/pairwise/{dataset}.{chrom}.output.txt"
     output:
         "{wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv"
