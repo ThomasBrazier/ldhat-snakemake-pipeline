@@ -22,7 +22,10 @@ mu: 1.28e-8 # The population mutation rate
 theta: 0.001 # The theta value set in LDhat
 ploidy: 1
 pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
+# Look up table section
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
+rhomax: 100
+n_pts: 101
 # Pairwise section
 # Do you wish to change grid over which to estimate likelihoods for (default = 100 points, 4Ner 0 - 101.0) (1/0) :0
 # Do you wish to carry out a sliding windows analysis? (yes=1/no=0):0
