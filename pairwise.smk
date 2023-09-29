@@ -141,16 +141,16 @@ rule summary:
         "{wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv"
     shell:
         """
-        echo "dataset\tchromosome\tstart\tend\tbatch\ttheta\trho\tlk" > {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
-        nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch)
+        echo "dataset\tchromosome\tbatch\tstart\tend\ttheta\trho\tlk" > {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
+        nbatch=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/nbatch)
         echo "nbatch = $nbatch"
         for i in $(seq $nbatch); do
-        start=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | head -n 1 | awk '{ print $2 }')
-        end=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | tail -n 1 | awk '{ print $2 }')
-        theta_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Theta | awk '{ print $3 }')
-        rho_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{ print $5 }')
-        lk_i=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{ print $9 }')
-        echo "{dataset}\t{chrom}\${{batch}}\t{{start}}\t{{end}}\t{{theta}}\t{{rho}}\t{{lk}}" >> {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
+        start=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | head -n 1 | awk '{{ print $2 }}')
+        end=$(cat {wdirpop}/pairwise/{dataset}.{chrom}/batch_$i.pos | tail -n 1 | awk '{{ print $2 }}')
+        theta=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Theta | awk '{{ print $3 }}')
+        rho=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{{ print $5 }}')
+        lk=$(cat {wdirpop}/pairwise/{dataset}.{chrom}.batch_$i.outfile.txt | grep Maximum | awk '{{ print $9 }}')
+        echo "{dataset}\t{chrom}\t$i\t$start\t$end\t$theta\t$rho\t$lk" >> {wdirpop}/pairwise/{dataset}.{chrom}.rho.tsv
         done
         """
 
