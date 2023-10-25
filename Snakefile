@@ -486,7 +486,7 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
+	        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
@@ -500,6 +500,46 @@ elif config["large_sample"] == "no":
 	    """
 
 
+
+rule MCMC_report:
+    """
+    Produce a Rmarkdown/pdf report
+    """
+    input:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+    output:
+        "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
+    conda:
+        "envs/Renv.yaml"
+    shell:
+        """
+        Rscript ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
+        mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html
+        """
+
+
+rule Rmd_report:
+    """
+    Produce a Rmarkdown/pdf report with vcfR - common summary statistics
+    """
+    input:
+        "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
+    output:
+        "{wdir}/{dataset}.{chrom}.bpen{bpen}.quality.html",
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml"
+    conda:
+        "envs/Renv.yaml"
+    shell:
+        """
+        Rscript vcf_qualityreport_chrom.R {dataset} {chrom}
+	    mv vcf_qualityreport_chrom.html {wdir}/{dataset}.{chrom}.bpen{bpen}.quality.html
+        # Copy the .yaml config
+        cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
+        """
+
+
 rule LDhot:
     """
     Infer recombination hotspots
@@ -508,7 +548,8 @@ rule LDhot:
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+        "{wdir}/{dataset}.quality.html"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
 	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
