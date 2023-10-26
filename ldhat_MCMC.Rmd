@@ -225,7 +225,7 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
 # mcmc.file = "data/test_ldhat_rates.txt.gz"
 mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
 # locs.file = "data/Arabidopsis_thaliana_1001genomes/K1.pop1/ldhat/"
-locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
+locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".", bpen, ".ldhat.locs", sep = "")
 figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burn.in, locs.file = locs.file)
 ```
 
