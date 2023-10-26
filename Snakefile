@@ -507,16 +507,19 @@ rule MCMC_report:
     """
     input:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-        "{wdirpop}/ldhat/{dataset}.{chrom}.ldhat.locs"
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
+        "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs"
     output:
+        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
     conda:
         "envs/Renv.yaml"
     shell:
         """
+        gzip -c {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz
         Rscript ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
         mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html
+        rm {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
         """
 
 
@@ -527,14 +530,14 @@ rule Rmd_report:
     input:
         "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
     output:
-        "{wdir}/{dataset}.{chrom}.bpen{bpen}.quality.html",
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html",
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml"
     conda:
         "envs/Renv.yaml"
     shell:
         """
         Rscript vcf_qualityreport_chrom.R {dataset} {chrom}
-	    mv vcf_qualityreport_chrom.html {wdir}/{dataset}.{chrom}.bpen{bpen}.quality.html
+	mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
         """
@@ -549,11 +552,9 @@ rule LDhot:
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites",
         "{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs",
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-        "{wdir}/{dataset}.quality.html"
+        "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html"
     output:
         "{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",
-	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
-	    "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz",
         temporary("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.log")
     threads: workflow.cores
     log:
@@ -563,8 +564,6 @@ rule LDhot:
         nsim={config[ldhot.nsim]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
-	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-	gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
 	gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
         """
