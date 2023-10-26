@@ -172,17 +172,17 @@ Using chromR (vcfR) to locate unusual features in a genome, when quality informa
 
 ```{r chromosomes, echo = TRUE}
 cat("===================================\n",
-    "        Analysing chromosome", chr, "\n",
+    "        Analysing chromosome", chrom, "\n",
     "===================================\n")
 # Susbet for the chromosome of interest
-vcf_subset=vcf[which(vcf@fix[,1] == chr)]
+vcf_subset=vcf[which(vcf@fix[,1] == chrom)]
 # Create a chromR object.
-chrom = create.chromR(name = chr, vcf = vcf_subset)
+chromosome = create.chromR(name = chrom, vcf = vcf_subset)
 # Summary of the chromosome
-chrom
+chromosome
 
 # Distribution of SNPs in the genome
-hist(as.numeric(chrom@vcf@fix[,2])/10^6, breaks = 1000,
+hist(as.numeric(chromosome@vcf@fix[,2])/10^6, breaks = 1000,
      main = "Distribution of SNPs in the genome",
      xlab = "Position (Mb)")
 
@@ -190,25 +190,25 @@ hist(as.numeric(chrom@vcf@fix[,2])/10^6, breaks = 1000,
 # Estimate the proportion of missing data per individual
 # genotypes in rows and individuals in columns
 # For each row, how many sites are NA
-NAsum = rowSums((is.na(chrom@vcf@gt) | (chrom@vcf@gt == ".") | (chrom@vcf@gt == "./.")),
+NAsum = rowSums((is.na(chromosome@vcf@gt) | (chromosome@vcf@gt == ".") | (chromosome@vcf@gt == "./.")),
                 na.rm = TRUE)
 
 if (sum(!is.na(NAsum)) == 0) { # If only NA values
   # Plot proportion of missing data per SNP location
-  plot(x = as.numeric(chrom@vcf@fix[,2])/10^6, y = NAsum/nrow(chrom@vcf@gt),
+  plot(x = as.numeric(chromosome@vcf@fix[,2])/10^6, y = NAsum/nrow(chromosome@vcf@gt),
      main = "Distribution of missing data per site in the genome",
      xlab = "Position (Mb)", ylab = "Proportion of missing data",
      col = rgb(0, 0, 0, 0.1))
 }
 
 # Diagnostic plots (if information encoded in the vcf)
-chrom = proc.chromR(chrom, verbose = TRUE)
-plot(chrom)
+chromosome = proc.chromR(chromosome, verbose = TRUE)
+plot(chromosome)
 # Longitudinal analysis
-chromoqc(chrom, dp.alpha = 66)
+chromoqc(chromosome, dp.alpha = 66)
 # Tabular summary
-head(chrom@var.info)
-head(chrom@win.info)
+head(chromosome@var.info)
+head(chromosome@win.info)
 ```
 
 
