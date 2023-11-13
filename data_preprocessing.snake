@@ -105,7 +105,7 @@ rule vcf2structure:
         "envs/vcftools.yaml"
     shell:
         """
-        plink --vcf {input} --out {wdir}/vcf2structure --allow-extra-chr --vcf-half-call missing --const-fid
+        plink --vcf {input} --out {wdir}/vcf2structure --allow-extra-chr --vcf-half-call missing --const-fid --chr-set $(wc -l {wdir}/{dataset}.chromosomes)
         """
 
 
