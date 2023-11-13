@@ -49,10 +49,10 @@ chromosome = params$chromosome
 bpen = params$bpen
 
 # TEST ONLY
-wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
-dataset = "Arabidopsis_thaliana_1001genomes"
-chromosome = "1"
-bpen = 5
+# wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
+# dataset = "Arabidopsis_thaliana_1001genomes"
+# chromosome = "1"
+# bpen = 5
 ```
 
 
