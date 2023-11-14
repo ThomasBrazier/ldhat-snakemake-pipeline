@@ -537,7 +537,7 @@ rule Rmd_report:
     shell:
         """
         Rscript vcf_qualityreport_chrom.R {dataset} {chrom}
-	mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
+	    mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
         """
