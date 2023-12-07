@@ -53,6 +53,11 @@ bpen = params$bpen
 # dataset = "Arabidopsis_thaliana_1001genomes"
 # chromosome = "1"
 # bpen = 5
+
+# wdirpop = "data/Glycine_max_Yang2021/K2.pop1"
+# dataset = "Glycine_max_Yang2021"
+# chromosome = "15"
+# bpen = 5
 ```
 
 
@@ -140,7 +145,7 @@ plot(p)
 ```{r sourceLDhat, echo=FALSE}
 # Summary by LDhat built-in functions
 # HEAVY Computations -> Server side to produce diagnostic figures
-source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
+# source("https://raw.githubusercontent.com/auton1/LDhat/master/coalescent.r")
 ```
 
 
@@ -151,9 +156,9 @@ burn.in = burnin
 # rates.file = "data/test_ldhat_rates.txt"
 
 summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.file=FALSE) {
-  library(ggplot2)
-  library(ggpubr)
-  x = read.table(rates.file, skip=1, fill=T);
+  # library(ggplot2)
+  # library(ggpubr)
+  x = read.table(rates.file, skip=1, fill=T)
   
   maplength = data.frame(sample = (1:length(x[,1])))
   maplength$length = x[,1]
@@ -174,6 +179,7 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
   
   data = expand.grid(X=c(1:nrow(x)), Y=c(1:(ncol(x)-1)))
   data$Z = unlist(c(log(x[,2:ncol(x)])))
+  
   p1b = ggplot2::ggplot(data = data, aes(x = X, y = Y, fill = Z)) +
     geom_tile() +
     scale_color_viridis_c() +
@@ -182,11 +188,11 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
   
   p1 = ggpubr::ggarrange(p1a, p1b, ncol = 2, widths = c(2, 3))
   
-  # plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
-  #      main="Mixing of total map length");
-  # image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
-  #       ylab="log(rate) at SNP", main="Mixing of rates");
-  # 
+  plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length",
+       main="Mixing of total map length");
+  image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample",
+        ylab="log(rate) at SNP", main="Mixing of rates");
+
   means<-apply(x[low:nrow(x),], 2, mean, na.rm=T);
   q.95<-apply(x[low:nrow(x),], 2, quantile, probs=c(0.025, 0.5, 0.975), na.rm=T);
   
@@ -207,10 +213,10 @@ summarise.interval.figure = function(rates.file="rates.txt", burn.in=30, locs.fi
     xlab("Position") + ylab("Posterior mean rate") +
     ggtitle("Posterior mean rates")
   
-  # plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5), 	
-  #      xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
-  # lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
-  # lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75), lty="dotted");
+  plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5),
+       xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
+  lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
+  lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75), lty="dotted");
   
   op<-cbind(means, t(q.95));
   colnames(op)<-c("Mean", "q2.5", "Median", "q97.5");
