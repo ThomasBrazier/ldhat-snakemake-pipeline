@@ -143,6 +143,11 @@ Read the LDhat and LDhot manuals for further details on output files.
 
 
 
+## Known bugs (and temporary solutions)
+
+
+
+
 
 ## References
 
