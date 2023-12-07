@@ -270,7 +270,7 @@ cat("Burnin:", burnin,"\n",
 
 ```{r summariseInterval, echo=FALSE}
 mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
-locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".ldhat.locs", sep = "")
+locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".",  bpen, ".ldhat.locs", sep = "")
 
 # figures = summarise.interval.figure(rates.file = gzfile(mcmc.file), burn.in = burn.in, locs.file = locs.file)
 
