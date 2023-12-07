@@ -12,7 +12,7 @@
 . /local/env/envconda.sh
 
 dataset=${1}
-ncores=16
+ncores=4
 
 echo "Run pipeline"
 snakemake -s data_preprocessing.snake -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --use-singularity --nolock --rerun-incomplete --config dataset=${dataset}
