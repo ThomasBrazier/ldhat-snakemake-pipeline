@@ -334,6 +334,9 @@ dev.off()
 
 
 ```{r, echo = TRUE}
+# rates.txt
+# each col is a SNP position
+# each row is an iteration
 means<-apply(x[low:nrow(x),], 2, mean, na.rm=T);
 q.95<-apply(x[low:nrow(x),], 2, quantile, probs=c(0.025, 0.5, 0.975), na.rm=T);
 
@@ -360,9 +363,10 @@ if (locs.file==FALSE) {
   xlab<-"Position (SNP)"
   } else {
   pos<-as.vector(as.matrix(read.table(locs.file, as.is=T, skip=1)))
-  xlab<-"Position"
+  xlab<-"Position (Mb)"
   }
 
+# 504322 in .locs
 plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5), 	
 xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
 lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
