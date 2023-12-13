@@ -15,10 +15,11 @@ test -f bpen${bpen}.rates_noheader.txt && rm bpen${bpen}.rates_noheader.txt
 n_batch=$(ls | grep "bpen${bpen}.batch_" | grep ".rates.txt" | wc -l)
 echo $n_batch
 
-rm bpen${bpen}.rates_noheader.txt
 touch bpen${bpen}.rates_noheader.txt
 
 # Remove overlapping SNPs
+# SNP positions are in columns
+# Cut extra columns
 echo "First chunk"
 zcat bpen${bpen}.batch_1.rates.txt.gz | tail -n +2 | head -n $bigchunk > bpen${bpen}.rates_noheader.txt
 
