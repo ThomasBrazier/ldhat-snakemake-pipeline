@@ -24,16 +24,16 @@ touch bpen${bpen}.rates_noheader.txt
 echo "First chunk"
 zcat bpen${bpen}.batch_1.rates.txt.gz | tail -n +2 | cut -f $(seq -s , 1 $bigchunk) > bpen${bpen}.rates_noheader.txt
 
-for f in $(seq 2 $(( $nbatch-1 )))
+for f in $(seq 2 $(( $n_batch-1 )))
 do
-  echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
+  # echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
   zcat bpen${bpen}.batch_${f}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $bigchunk) > tmp.txt
   paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
   cat tmp2 > bpen${bpen}.rates_noheader.txt
 done
 
 echo "Last chunk"
-zcat bpen${bpen}.batch_${nbatch}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $chunk) > tmp.txt
+zcat bpen${bpen}.batch_${n_batch}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $chunk) > tmp.txt
 paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
 cat tmp2 > bpen${bpen}.rates_noheader.txt
 
