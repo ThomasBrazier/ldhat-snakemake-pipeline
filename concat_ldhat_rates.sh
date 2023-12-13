@@ -5,6 +5,8 @@ wdirpop=${1}
 dataset=${2}
 chromosome=${3}
 bpen=${4}
+bigchunk=${5}
+smalloverlap=${6}
 
 cd $wdirpop/ldhat/${dataset}.${chromosome}/
 
@@ -16,15 +18,24 @@ echo $n_batch
 rm bpen${bpen}.rates_noheader.txt
 touch bpen${bpen}.rates_noheader.txt
 
-for f in $(seq 1 $(( $n_batch )))
+# Remove overlapping SNPs
+echo "First chunk"
+zcat bpen${bpen}.batch_1.rates.txt.gz | tail -n +2 | head -n $bigchunk > bpen${bpen}.rates_noheader.txt
+
+for f in $(seq 2 $(( $nbatch-1 )))
 do
   echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
-  # zcat bpen${bpen}.batch_${f}.rates.txt | tail -n +2 >> bpen${bpen}.rates_noheader.txt
-  zcat bpen${bpen}.batch_${f}.rates.txt.gz | tail -n +2 > tmp.txt
+  zcat bpen${bpen}.batch_${f}.rates.txt.gz | tail -n +2 | head -n $bigchunk | tail -n +$(( $smalloverlap+1 )) > tmp.txt
   paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
   cat tmp2 > bpen${bpen}.rates_noheader.txt
 done
-# n_snps=$(cat bpen${bpen}.rates_noheader.txt | wc -l)
+
+echo "Last chunk"
+zcat bpen${bpen}.batch_${nbatch}.rates.txt.gz | tail -n +2 | tail -n +$(( $smalloverlap+1 )) > tmp.txt
+paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
+cat tmp2 > bpen${bpen}.rates_noheader.txt
+
+# Add header
 n_snps=$(awk '{print NF}' bpen${bpen}.rates_noheader.txt | sort -nu | tail -n 1)
 
 rm tmp2
