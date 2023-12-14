@@ -431,6 +431,7 @@ if config["large_sample"] == "yes":
         shell:
             """
             vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
+            # Test data integrity
             """
 elif config["large_sample"] == "no":
     rule convert:
@@ -488,7 +489,7 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt"
         output:
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt",
-	        "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
+	          "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt.gz",
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
@@ -497,9 +498,9 @@ elif config["large_sample"] == "no":
             burn={config[ldhat.burn]}
             singularity exec --bind $PWD:/data ldhat.sif stat -input /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt -burn $burn -loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs -prefix /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.
             # Compress intermediary files
-    	    gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
+    	      gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
-	    """
+	          """
 
 
 

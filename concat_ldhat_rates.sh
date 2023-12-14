@@ -26,14 +26,15 @@ zcat bpen${bpen}.batch_1.rates.txt.gz | tail -n +2 | cut -f $(seq -s , 1 $bigchu
 
 for f in $(seq 2 $(( $n_batch-1 )))
 do
-  # echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
-  zcat bpen${bpen}.batch_${f}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $bigchunk) > tmp.txt
+  echo "Processing bpen${bpen}.batch_${f}.rates.txt.gz file..."
+  zcat bpen${bpen}.batch_$f.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $bigchunk) > tmp.txt
   paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
   cat tmp2 > bpen${bpen}.rates_noheader.txt
 done
 
 echo "Last chunk"
-zcat bpen${bpen}.batch_${n_batch}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $chunk) > tmp.txt
+n_col=$(zcat bpen${bpen}.batch_${n_batch}.rates.txt.gz | awk '{print NF}' | sort -nu | tail -n 1)
+zcat bpen${bpen}.batch_${n_batch}.rates.txt.gz | tail -n +2 | cut -f $(seq -s , $(( $smalloverlap+1 )) $n_col) > tmp.txt
 paste bpen${bpen}.rates_noheader.txt tmp.txt > tmp2
 cat tmp2 > bpen${bpen}.rates_noheader.txt
 
