@@ -25,6 +25,8 @@ In addition, Singularity images are required for additional softwares. Run withi
 singularity pull faststructure.sif docker://tombrazier/faststructure
 singularity pull ldhat.sif docker://tombrazier/ldhat:v1.0
 singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
+singularity pull smcpp.sif docker://terhorst/smcpp:latest
+singularity pull pyrho.sif docker://tombrazier/pyrho:latest
 ```
 
 To install conda environments at the first run of the pipeline, use
