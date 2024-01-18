@@ -259,4 +259,3 @@ rule k_statistics:
                 fi
 	done
         """
-

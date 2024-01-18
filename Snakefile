@@ -245,32 +245,69 @@ rule subset_ldhat:
         """
 
 
-rule lkgen:
+rule smcpp:
     """
-    Generate a complete look-up table from a preexisting one
-    https://github.com/auton1/LDhat/tree/master/lk_files
-    or generate a new one if explicitly asked in config.yaml
+    Estimate a rough demography of the population
+    Used to estimate a demography-aware look-up table with LDpop
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     output:
+        "{wdirpop}/smcpp/{dataset}.{chrom}/plot.pdf",
+        "{wdirpop}/smcpp/{dataset}.{chrom}/model.final.json",
+        "{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz",
+        "{wdirpop}/smcpp/{dataset}.{chrom}/plot.csv"
+    log:
+        "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        mkdir smcpp
+        # Subset 20 individuals for SMC++
+        zcat $dataset.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > indlist
+        cat indlist | shuf -n {smcpp.subset} > smcpp_samples
+        cat smcpp_samples
+        vcftools --gzvcf {dataset}.chromosome.{chrom}.ldhat.vcf.gz --keep smcpp_samples --recode --out {dataset}.chromosome.{chrom}.smcpp
+        mv {dataset}.chromosome.{chrom}.smcpp.recode.vcf {dataset}.chromosome.{chrom}.smcpp.vcf
+        bgzip {dataset}.chromosome.{chrom}.smcpp.vcf
+        tabix {dataset}.chromosome.{chrom}.smcpp.vcf.gz
+        # Need the list of individuals sampled
+        samples=$(cat smcpp_samples | awk '{printf("%s,",$0)}' | sed 's/,\s*$//')
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.smcpp.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
+        # Fit the model using estimate:
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {mu} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
+        # The model.final.json output file contains fields named rho and N0. rho is the estimated population-scaled recombination rate per base-pair. To convert it to units of generations, multiply by 2 * N0.
+        # Visualize the results using plot:
+        # -c produces a CSV-formatted table containing the data used to generate the plot.
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ plot -c /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/plot.pdf /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/model.final.json
+        # A useful diagnostic for understanding the final output of SMC++ are the sequence of intermediate estimates .model.iter<k>.json which are saved by --estimate in the --output directory. By plotting these, you can get a sense of whether the optimizer is overfitting and requires additional regularization. 
+		"""
+
+
+rule LDpop:
+    """
+    Generate a complete demography-aware look-up table
+    """
+    input:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz",
+        "{wdirpop}/smcpp/{dataset}.{chrom}/plot.csv"
+    output:
         "{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt"
     log:
         "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
+    threads: workflow.cores
+    conda:
+        "envs/Renv.yaml"
     shell:
         """
-	n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}')
-        n=$((2*$n))
-        echo $n
-	if [ "{config[completelk]}" == "no" ]
-	then
-	echo "Runnning lkgen"
-	singularity exec --bind $PWD:/data ldhat.sif lkgen -prefix /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}. -lk /data/lk_files/lk_n100_t{config[theta]} -nseq $n
-	else
-	echo "Generate a new look-up table"
-	singularity exec --bind $PWD:/data ldhat.sif complete -n $n -rhomax 100 -n_pts 101 -theta {config[theta]} -prefix /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.
-	fi
-	"""
+        Rscript scripts/smcpp_estimates.R {wdirpop}/smcpp/{dataset}.{chrom}/plot.csv {wdirpop}/smcpp/{dataset}.{chrom}/
+        s=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/Ne.txt) # coalescent scaled population sizes (s0=present size, sD=ancient size), e.g 100,.1,1
+        t=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/times.txt) # times of size changes from present backwards. Must be increasing positive reals. e.g. .5,.58
+        #rh=$() # grid of rhos (twice the recomb rate). The grid has num_rh uniformly spaced points from 0 to max_rh, inclusive.
+        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size
+        singularity exec --bind $PWD:/data pyrho.sif source activate pyrho && /data/run/ldtable.py -n $n -th {theta} -s $s -t $t -rh 101,100 --cores {cores} --approx --log . > /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
+        """
 
 
 if config["large_sample"] == "yes":
