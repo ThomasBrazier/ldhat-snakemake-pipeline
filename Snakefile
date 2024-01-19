@@ -84,14 +84,14 @@ rule sampling_pop:
         # Filter chromosomes and keep only bi-allelic alelles
         if [ {config[minQ]} -eq 0 ]
         then
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
-	else
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
-	fi
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --hwe {hwe}
+	    else
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]} --hwe {hwe}
+	    fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
-	bgzip -f {wdirpop}/{dataset}.pop.vcf
+	    bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
-	bgzip -f {wdirpop}/{dataset}.pop.vcf
+	    bgzip -f {wdirpop}/{dataset}.pop.vcf
         tabix --csi {wdirpop}/{dataset}.pop.vcf.gz
         """
 
@@ -266,15 +266,15 @@ rule smcpp:
         mkdir smcpp
         # Subset 20 individuals for SMC++
         zcat $dataset.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > indlist
-        cat indlist | shuf -n {smcpp.subset} > smcpp_samples
-        cat smcpp_samples
-        vcftools --gzvcf {dataset}.chromosome.{chrom}.ldhat.vcf.gz --keep smcpp_samples --recode --out {dataset}.chromosome.{chrom}.smcpp
-        mv {dataset}.chromosome.{chrom}.smcpp.recode.vcf {dataset}.chromosome.{chrom}.smcpp.vcf
-        bgzip {dataset}.chromosome.{chrom}.smcpp.vcf
-        tabix {dataset}.chromosome.{chrom}.smcpp.vcf.gz
+        #cat indlist | shuf -n {smcpp.subset} > smcpp_samples
+        #cat smcpp_samples
+        #vcftools --gzvcf {dataset}.chromosome.{chrom}.ldhat.vcf.gz --keep smcpp_samples --recode --out {dataset}.chromosome.{chrom}.smcpp
+        #mv {dataset}.chromosome.{chrom}.smcpp.recode.vcf {dataset}.chromosome.{chrom}.smcpp.vcf
+        #bgzip {dataset}.chromosome.{chrom}.smcpp.vcf
+        #tabix {dataset}.chromosome.{chrom}.smcpp.vcf.gz
         # Need the list of individuals sampled
-        samples=$(cat smcpp_samples | awk '{printf("%s,",$0)}' | sed 's/,\s*$//')
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.smcpp.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
+        samples=$(cat indlist | awk '{printf("%s,",$0)}' | sed 's/,\s*$//')
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
         # Fit the model using estimate:
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {mu} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
         # The model.final.json output file contains fields named rho and N0. rho is the estimated population-scaled recombination rate per base-pair. To convert it to units of generations, multiply by 2 * N0.

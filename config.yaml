@@ -11,6 +11,7 @@ maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1 # The maximum amount of missing data allowed
 maxmissing: 0.9 # The required proportion of data (0.9 means that at less than 10% of sites are missing)
 minQ: 30 # 0 or >0; Includes only sites with Quality scores above this value; when set to 0, sites are not filtered on this criterion (e.g. info not avalaible)
+hwe: 1 # Hardy Weinberg test, the p-value of the test to remove markers, 1 if no HWE test
 subset: 40 # Number of diploid individuals to randomly subset
 maxk: 4 # Pop structure analysis: Max number of clusters to explore with FastSTRUCTURE
 K: 1 # The number of clusters K to retain
