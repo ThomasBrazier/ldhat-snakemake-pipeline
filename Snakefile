@@ -271,7 +271,7 @@ rule smcpp:
         """
         mkdir {wdirpop}/smcpp
         zcat $dataset.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > indlist
-        samples=$(cat indlist | awk '{printf("%s,",$0)}' | sed 's/,\s*$//')
+        samples=$(cat indlist | awk '{{printf("%s,",$0)}}' | sed 's/,\s*$//')
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
         # Fit the model using estimate:
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {mu} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
