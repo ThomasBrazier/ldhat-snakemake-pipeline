@@ -84,9 +84,9 @@ rule sampling_pop:
         # Filter chromosomes and keep only bi-allelic alelles
         if [ {config[minQ]} -eq 0 ]
         then
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --hwe {hwe}
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
 	    else
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]} --hwe {hwe}
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
 	    fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
 	    bgzip -f {wdirpop}/{dataset}.pop.vcf
@@ -134,7 +134,7 @@ rule split_chromosome:
         "envs/vcftools.yaml"
     shell:
         """
-        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+        vcftools --gzvcf {wdirpop}/{dataset}.pop.vcf.gz --out {wdirpop}/out --recode --chr {chrom} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --hwe {config[hwe]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.vcf
         #tabix -f -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz
