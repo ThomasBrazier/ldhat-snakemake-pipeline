@@ -77,6 +77,7 @@ rule sampling_pop:
     	"{wdirpop}/{dataset}.pop.vcf.gz"
     log:
         "{wdirpop}/logs/{dataset}.sampling_pop.log"
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -106,6 +107,7 @@ rule effective_size:
         "{wdirpop}/statistics/{dataset}.effective_size"
     log:
         "{wdirpop}/logs/{dataset}.effective_size.log"
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     params:
@@ -128,6 +130,7 @@ rule split_chromosome:
         "{wdirpop}/statistics/{dataset}.effective_size"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz"
+    threads: workflow.cores
     log:
         "{wdirpop}/logs/{dataset}.split_chromosome.{chrom}.log"
     conda:
@@ -212,6 +215,7 @@ rule gzpseudodiploid:
         "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz.csi"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.gzpseudodiploid.log"
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -234,14 +238,15 @@ rule subset_ldhat:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
     log:
         "{wdirpop}/logs/{dataset}.make_subset_ldhat.{chrom}.log"
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     shell:
         """
-	RANDOM={config[seed]}
-	vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
+	    RANDOM={config[seed]}
+	    vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
-	bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
+	    bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
 
@@ -259,6 +264,7 @@ rule smcpp:
         "{wdirpop}/smcpp/{dataset}.{chrom}/plot.csv"
     log:
         "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
+    threads: workflow.cores
     conda:
         "envs/vcftools.yaml"
     shell:
@@ -508,6 +514,7 @@ elif config["large_sample"] == "no":
             temporary("{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.type_table.txt")
         log:
             "{wdirpop}/logs/{dataset}.ldhatinterval.{chrom}.bpen{bpen}.log"
+        threads: workflow.cores
         shell:
             """
             iter={config[interval.iter]}
@@ -530,6 +537,7 @@ elif config["large_sample"] == "no":
             "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz"
         log:
             "{wdirpop}/logs/{dataset}.ldhatstat.{chrom}.bpen{bpen}.log"
+        threads: workflow.cores
         shell:
             """
             burn={config[ldhat.burn]}
@@ -552,6 +560,7 @@ rule MCMC_report:
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
+    threads: workflow.cores
     conda:
         "envs/Renv.yaml"
     shell:
@@ -572,6 +581,7 @@ rule Rmd_report:
     output:
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html",
         "{wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml"
+    threads: workflow.cores
     conda:
         "envs/Renv.yaml"
     shell:
