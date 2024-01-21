@@ -9,3 +9,4 @@ dependencies:
   - bcftools
   - plink>=1.9
   - parallel
+  - r-base

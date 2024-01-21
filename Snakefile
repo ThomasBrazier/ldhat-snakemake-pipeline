@@ -176,6 +176,59 @@ rule phasing_vcf:
         #rm {wdirpop}/newheader {wdirpop}/newheader2 {wdirpop}/colnames {wdirpop}/newvcf
         """
 
+rule roh:
+    """
+    Detect Runs of Homozygosity with PLINK and generate a report of ROHs
+    https://zzz.bwh.harvard.edu/plink/ibdibs.shtml#homo
+    A simple screen for runs of homozygous genotypes within any one individual is provided by the commands --homozyg-snp and --homozyg-kb which define the run in terms of the required number of homozygous SNPs spanning a certain kb distance, e.g.
+    The algorithm is as follows: Take a window of X SNPs and slide this across the genome. At each window position determine whether this window looks 'homozygous' enough (yes/no) (i.e. allowing for some number of hets or missing calls). Then, for each SNP, calculate the proportion of 'homozygous' windows that overlap that position. Call segments based on this metric, e.g. based on a threshold for the average.
+    The exact window size and thresholds, relative to the SNP density and expected size of homozygous segments, etc, is obviously important: sensible default values are supplied for the context of dense SNP maps, scanning for large segments. In general, this approach will ensure that otherwise long runs of homozygosity are not broken by the occassional heterozygote. (For more accurate detection of smaller segments, one might consider approaches that also take population parameters such as allele frequency and recombination rate into account, in a HMM approach for example: but for now, PLINK only supports this basic detection of long, homozygous segments).
+    """
+    input:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
+    output:
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom.summary",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom.indiv",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.log",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
+    log:
+        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.plink_roh.log"
+    threads: workflow.cores
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        mkdir -p {wdirpop}/mask
+        plink --vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --homozyg --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
+        """
+
+
+rule mask_low_snp_density:
+    """
+    Detect regions of low SNP density based on a sliding window approach.
+    """
+    input:
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom.summary",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.hom.indiv",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.log",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
+    output:
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
+    log:
+        "{wdirpop}/logs/{dataset}.chromosome.{chrom}.snp_dens.log"
+    threads: workflow.cores
+    conda:
+        "envs/vcftools.yaml"
+    shell:
+        """
+        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
+        # Make a BED file with three columns to mask regions in SMC++
+        #Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
+        """
+	
 
 rule pseudodiploid:
     """
@@ -184,7 +237,8 @@ rule pseudodiploid:
     Method 2. Keep both haplotypes and resample among individuals
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
     log:
@@ -304,8 +358,8 @@ rule LDpop:
         s=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/Ne.txt) # coalescent scaled population sizes (s0=present size, sD=ancient size), e.g 100,.1,1
         t=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/times.txt) # times of size changes from present backwards. Must be increasing positive reals. e.g. .5,.58
         #rh=$() # grid of rhos (twice the recomb rate). The grid has num_rh uniformly spaced points from 0 to max_rh, inclusive.
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size, number of sequences/haplotypesi
-        n=$(( 2 * $n ))
+        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size, number of sequences/haplotypes
+        n=$(( 2 * $n )) # Number of haplotypes
         echo "Generating look-up table for $n samples"
         ldpop/run/ldtable.py -n $n -th {config[theta]} -s $s -t $t -rh 101,100 --cores {config[cores]} --approx > {wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
         """
