@@ -304,6 +304,7 @@ rule LDpop:
         t=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/times.txt) # times of size changes from present backwards. Must be increasing positive reals. e.g. .5,.58
         #rh=$() # grid of rhos (twice the recomb rate). The grid has num_rh uniformly spaced points from 0 to max_rh, inclusive.
         n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size
+        echo "Generating look-up table for $n samples"
         singularity exec --bind $PWD:/data pyrho.sif source activate pyrho && /data/run/ldtable.py -n $n -th {theta} -s $s -t $t -rh 101,100 --cores {cores} --approx --log . > /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
         """
 
