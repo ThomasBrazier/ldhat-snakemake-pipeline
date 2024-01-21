@@ -19,6 +19,13 @@ After installing dependencies, clone the github directory where you want to perf
 git clone https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git 
 ```
 
+LDpop must be installed locally from the github directory:
+
+```
+git clone https://github.com/popgenmethods/ldpop.git ldpop/
+```
+
+
 In addition, Singularity images are required for additional softwares. Run within the working directory:
 
 ```
