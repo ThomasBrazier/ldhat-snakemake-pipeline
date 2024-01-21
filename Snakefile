@@ -269,9 +269,10 @@ rule smcpp:
         "envs/vcftools.yaml"
     shell:
         """
-        mkdir {wdirpop}/smcpp
-        zcat $dataset.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > indlist
-        samples=$(cat indlist | awk '{{printf("%s,",$0)}}' | sed 's/,\s*$//')
+        mkdir -p {wdirpop}/smcpp
+        zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > {wdirpop}/indlist
+        samples=$(cat {wdirpop}/indlist | awk '{{printf("%s,",$0)}}' | sed 's/,\s*$//')
+        tabix {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
         # Fit the model using estimate:
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {config[mu]} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
@@ -296,15 +297,15 @@ rule LDpop:
         "{wdirpop}/logs/{dataset}.lookup.{chrom}.log"
     threads: workflow.cores
     conda:
-        "envs/Renv.yaml"
+        "envs/pyrho.yaml"
     shell:
         """
         Rscript scripts/smcpp_estimates.R {wdirpop}/smcpp/{dataset}.{chrom}/plot.csv {wdirpop}/smcpp/{dataset}.{chrom}/
         s=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/Ne.txt) # coalescent scaled population sizes (s0=present size, sD=ancient size), e.g 100,.1,1
         t=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/times.txt) # times of size changes from present backwards. Must be increasing positive reals. e.g. .5,.58
         #rh=$() # grid of rhos (twice the recomb rate). The grid has num_rh uniformly spaced points from 0 to max_rh, inclusive.
-        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size
-        singularity exec --bind $PWD:/data pyrho.sif source activate pyrho && /data/run/ldtable.py -n $n -th {theta} -s $s -t $t -rh 101,100 --cores {cores} --approx --log . > /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
+        n=$(zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep ^#CHROM | awk '{{print NF-9}}') # Sample size, number of individuals
+        ldpop/run/ldtable.py -n $n -th {config[theta]} -s $s -t $t -rh 101,100 --cores {config[cores]} --approx > {wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt
         """
 
 

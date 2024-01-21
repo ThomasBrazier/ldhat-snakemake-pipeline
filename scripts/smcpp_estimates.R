@@ -11,14 +11,19 @@ input = args[1]
 output = args[2]
 
 df = read.table(input, header = T, sep = ",")
+df$x = as.numeric(df$x)
+df$y = as.numeric(df$y)
 
-Ne = as.character(unique(df$y))
-Ne = paste(Ne, collapse = ",")
+df
+
+y = unique(df$y)
+Ne = paste(as.character(y), collapse = ",")
 Ne
 write.table(Ne, paste0(output, "Ne.txt"), col.names = F,
             row.names = F, quote = F)
 
-t = unlist(lapply(Ne, function(x) {min(df$x[which(df$y == x)])}))
+t = unlist(lapply(y, function(x) {min(df$x[which(df$y == as.numeric(x))])}))
+t
 t = t[-1]
 t = paste(t, collapse = ",")
 t
