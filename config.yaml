@@ -20,8 +20,7 @@ shapeitWindow: 2 # Window size in Mb for phasing with ShapeIt2
 mu: 1.28e-8 # The population mutation rate
 theta: 0.001 # The theta value set in LDhat
 snpdens.binsize: 100000 # Sliding windows size where to measure SNP density
-snpdens.min: 100 # Windows with SNP density < min are masked in SMC++; 1 SNP/kb seems a good default choice
-smcpp.subset: 20 # The number of samples for SMC++ (random sampling)
+snpdens.min: 100 # Windows with SNP density < min are masked; 1 SNP/kb seems a good default choice
 ploidy: 1
 pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
