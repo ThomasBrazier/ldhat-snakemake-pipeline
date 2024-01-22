@@ -9,7 +9,9 @@ if (length(args) != 3) {
 
 input = args[1]
 output = args[2]
-mu = args[3]
+mu = as.numeric(args[3])
+
+cat("mu =", mu, "\n")
 
 df = read.table(input, header = T, sep = ",")
 df$x = as.numeric(df$x)
@@ -17,17 +19,16 @@ df$y = as.numeric(df$y)
 
 df
 
-cat("Get piecewise coalescent-scaled Ne")
+cat("Get piecewise coalescent-scaled Ne\n")
 n_ref = 0.0005 / (4. * mu)
 
 y = unique(df$y)
-y = y/n_ref
-Ne = paste(as.character(y), collapse = ",")
+Ne = paste(as.character(y/n_ref), collapse = ",")
 Ne
 write.table(Ne, paste0(output, "Ne.txt"), col.names = F,
             row.names = F, quote = F)
 
-cat("Get piecewise coalescent-scaled times")
+cat("Get piecewise coalescent-scaled times\n")
 t = unlist(lapply(y, function(x) {min(df$x[which(df$y == as.numeric(x))])}))
 t
 t = t[-1]
