@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
+#SBATCH --mail-user=thomas.brazier@univ-rennes.fr
 #SBATCH --mail-type=all
 #SBATCH --mem=200GB
 #SBATCH --cpus-per-task=16
