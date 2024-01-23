@@ -216,7 +216,8 @@ rule mask_low_snp_density:
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.log",
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
     output:
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.tbi"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.snp_dens.log"
     threads: workflow.cores
@@ -227,6 +228,7 @@ rule mask_low_snp_density:
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         # Make a BED file with three columns to mask regions in SMC++
         Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
+        tabix -f -p bed {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
         """
 	
 
@@ -326,8 +328,8 @@ rule smcpp:
         mkdir -p {wdirpop}/smcpp
         zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > {wdirpop}/indlist
         samples=$(cat {wdirpop}/indlist | awk '{{printf("%s,",$0)}}' | sed 's/,\s*$//')
-        tabix {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples
+        tabix -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples --mask {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
         # Fit the model using estimate:
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {config[mu]} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
         # The model.final.json output file contains fields named rho and N0. rho is the estimated population-scaled recombination rate per base-pair. To convert it to units of generations, multiply by 2 * N0.
