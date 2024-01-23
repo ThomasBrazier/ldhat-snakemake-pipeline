@@ -4,7 +4,7 @@
 This pipeline is a BETA version in active development (use the `main` branch as `dev` regularly break things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
 
-## Installation
+## Install
 
 ### Dependencies
 
@@ -142,8 +142,11 @@ Output files of LDhat and LDhot are placed in `data/<dataset>/K*.pop*/ldhat` and
 Read the LDhat and LDhot manuals for further details on output files.
 
 
+## Limitations
 
-## Known bugs (and temporary solutions)
+* Only one chromosome at a time, at least until the rule 'split_chromosome' has been successfully passed one time
+
+## Known bugs
 
 
 

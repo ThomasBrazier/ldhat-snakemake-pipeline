@@ -407,7 +407,9 @@ if config["large_sample"] == "yes":
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
-            bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen} $bigchunk $smalloverlap
+            echo "Concat LDhat rates"
+            bash concat_ldhat_rates.sh {wdirpop} {dataset} {chrom} {bpen} $bigchunk $smalloverlap $chunk
+            echo "Gzip files"
             gzip {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.rates.txt
             mv {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.rates.txt.gz {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt.gz
             """
@@ -429,6 +431,7 @@ if config["large_sample"] == "yes":
         shell:
             """
             vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}.{bpen}
+            # Test data integrity
             """
 elif config["large_sample"] == "no":
     rule convert:
@@ -497,7 +500,7 @@ elif config["large_sample"] == "no":
             # Compress intermediary files
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.rates.txt
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.bounds.txt
-        """
+            """
 
 
 
