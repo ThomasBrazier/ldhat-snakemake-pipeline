@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --mail-user=thomas.brazier@univ-rennes1.fr
+#SBATCH --mail-user=thomas.brazier@univ-rennes.fr
 #SBATCH --mail-type=all
 #SBATCH --mem=200GB
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=16
 #SBATCH --time=25-60:00:00
 #SBATCH --job-name=LDmap
 
@@ -13,7 +13,7 @@
 
 dataset=${1}
 chrom=${2}
-ncores=4
+ncores=16
 
 export OMP_NUM_THREADS=$ncores
 
