@@ -90,9 +90,9 @@ rule sampling_pop:
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
         fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
-	bgzip -f {wdirpop}/{dataset}.pop.vcf
+        bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
-	bgzip -f {wdirpop}/{dataset}.pop.vcf
+        bgzip -f {wdirpop}/{dataset}.pop.vcf
         tabix --csi {wdirpop}/{dataset}.pop.vcf.gz
         """
 
