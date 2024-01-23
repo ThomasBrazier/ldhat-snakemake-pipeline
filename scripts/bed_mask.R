@@ -8,8 +8,8 @@ if (length(args) != 3) {
 }
 
 input = args[1]
-bin = args[2]
-min = args[3]
+bin = as.numeric(args[2])
+min = as.numeric(args[3])
 
 snpdens = read.table(paste0(input, ".snpden"),
                  header = T)
