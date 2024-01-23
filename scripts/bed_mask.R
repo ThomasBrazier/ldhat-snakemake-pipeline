@@ -14,7 +14,7 @@ min = args[3]
 snpdens = read.table(paste0(input, ".snpden"),
                  header = T)
 
-snpden = min/bin * 1000
+snpden = as.numeric(min)/as.numeric(bin) * 1000
 
 mask = snpdens[which(snpdens$VARIANTS.KB < snpden),]
 mask$chromStart = mask$BIN_START - 1
