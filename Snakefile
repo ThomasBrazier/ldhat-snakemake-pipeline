@@ -228,7 +228,7 @@ rule mask_low_snp_density:
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         # Make a BED file with three columns to mask regions in SMC++
         Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
-        tabix -f -p {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
+        tabix -f -p bed {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
         """
 	
 
