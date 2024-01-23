@@ -276,7 +276,7 @@ rule gzpseudodiploid:
         """
         gunzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz
         bgzip {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf
-        tabix -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --csi
+        tabix -f -p vcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --csi
         """
 
 
@@ -297,10 +297,10 @@ rule subset_ldhat:
         "envs/vcftools.yaml"
     shell:
         """
-	    RANDOM={config[seed]}
-	    vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
+        RANDOM={config[seed]}
+        vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz --out {wdirpop}/out --recode --max-indv {config[subset]} --maf {config[maf]} --max-missing {config[maxmissing]}
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
-	    bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
+        bgzip -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf
         """
 
 
