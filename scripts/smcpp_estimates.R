@@ -3,7 +3,7 @@
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is one argument: if not, return an error
-if (length(args) != 3) {
+if (length(args) != 4) {
   stop("<input file>, <output dir>, <mu> and <theta> must be passed in argument", call.=FALSE)
 }
 
