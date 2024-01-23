@@ -86,13 +86,13 @@ rule sampling_pop:
         if [ {config[minQ]} -eq 0 ]
         then
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
-	    else
+        else
         vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
-	    fi
+        fi
         mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
-	    bgzip -f {wdirpop}/{dataset}.pop.vcf
+	bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
-	    bgzip -f {wdirpop}/{dataset}.pop.vcf
+	bgzip -f {wdirpop}/{dataset}.pop.vcf
         tabix --csi {wdirpop}/{dataset}.pop.vcf.gz
         """
 
