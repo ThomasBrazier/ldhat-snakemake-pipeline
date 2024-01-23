@@ -4,14 +4,16 @@ args = commandArgs(trailingOnly=TRUE)
 
 # test if there is one argument: if not, return an error
 if (length(args) != 3) {
-  stop("<input file>, <output dir> and <mu> must be passed in argument", call.=FALSE)
+  stop("<input file>, <output dir>, <mu> and <theta> must be passed in argument", call.=FALSE)
 }
 
 input = args[1]
 output = args[2]
 mu = as.numeric(args[3])
+theta = as.numeric(args[4])
 
 cat("mu =", mu, "\n")
+cat("theta =", theta, "\n")
 
 df = read.table(input, header = T, sep = ",")
 df$x = as.numeric(df$x)
@@ -20,7 +22,7 @@ df$y = as.numeric(df$y)
 df
 
 cat("Get piecewise coalescent-scaled Ne\n")
-n_ref = 0.0005 / (4. * mu)
+n_ref = theta / (4. * mu)
 
 y = unique(df$y)
 Ne = paste(as.character(y/n_ref), collapse = ",")

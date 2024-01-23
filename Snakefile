@@ -226,7 +226,7 @@ rule mask_low_snp_density:
         """
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         # Make a BED file with three columns to mask regions in SMC++
-        #Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
+        Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
         """
 	
 
@@ -354,7 +354,7 @@ rule LDpop:
         "envs/pyrho.yaml"
     shell:
         """
-        Rscript scripts/smcpp_estimates.R {wdirpop}/smcpp/{dataset}.{chrom}/plot.csv {wdirpop}/smcpp/{dataset}.{chrom}/ {config[mu]}
+        Rscript scripts/smcpp_estimates.R {wdirpop}/smcpp/{dataset}.{chrom}/plot.csv {wdirpop}/smcpp/{dataset}.{chrom}/ {config[mu]} {config[theta]}
         s=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/Ne.txt) # coalescent scaled population sizes (s0=present size, sD=ancient size), e.g 100,.1,1
         t=$(cat {wdirpop}/smcpp/{dataset}.{chrom}/times.txt) # times of size changes from present backwards. Must be increasing positive reals. e.g. .5,.58
         #rh=$() # grid of rhos (twice the recomb rate). The grid has num_rh uniformly spaced points from 0 to max_rh, inclusive.
