@@ -216,7 +216,8 @@ rule mask_low_snp_density:
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.log",
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
     output:
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.tbi"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.snp_dens.log"
     threads: workflow.cores
@@ -227,6 +228,7 @@ rule mask_low_snp_density:
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         # Make a BED file with three columns to mask regions in SMC++
         Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
+        tabix -f -p {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
         """
 	
 
