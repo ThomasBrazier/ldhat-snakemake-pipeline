@@ -25,7 +25,7 @@ colnames(mask)[1] = "chrom"
 mask[,c("chrom", "chromStart", "chromEnd")]
 
 write.table(mask[,c("chrom", "chromStart", "chromEnd")],
-            paste0(input, ".bed"),
+            paste0(input, ".bed"), sep = "\t",
             col.names = F, row.names = F, quote = F)
 
 
