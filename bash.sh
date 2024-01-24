@@ -18,4 +18,4 @@ ncores=16
 export OMP_NUM_THREADS=$ncores
 
 echo "Run pipeline"
-snakemake -s Snakefile -p -j $ncores --until Rmd_report --configfile data/${dataset}/config.yaml --use-conda --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores
+snakemake -s Snakefile -p -j $ncores --configfile data/${dataset}/config.yaml --use-conda --nolock --rerun-incomplete --printshellcmds --config dataset=${dataset} chrom=${chrom} cores=$ncores
