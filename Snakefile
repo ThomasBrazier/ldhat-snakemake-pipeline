@@ -257,7 +257,7 @@ rule pseudodiploid:
 	        if [ {config[pseudodiploid]} -eq 2 ]; then
 	            Rscript pseudodiploids.R {wdirpop} {chrom} 2
             else
-	            cp {input} {output}
+	            cp {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz {output}
 	        fi
         fi
         """
