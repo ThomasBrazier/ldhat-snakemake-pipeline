@@ -311,7 +311,8 @@ rule smcpp:
     Used to estimate a demography-aware look-up table with LDpop
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz"
+        "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz",
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed"
     output:
         "{wdirpop}/smcpp/{dataset}.{chrom}/plot.pdf",
         "{wdirpop}/smcpp/{dataset}.{chrom}/model.final.json",
