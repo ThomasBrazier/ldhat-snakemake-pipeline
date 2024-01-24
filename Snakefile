@@ -85,15 +85,15 @@ rule sampling_pop:
         # Filter chromosomes and keep only bi-allelic alelles
         if [ {config[minQ]} -eq 0 ]
         then
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/{dataset}.pop --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2
         else
-        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/out --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
+        vcftools --gzvcf {wdir}/{dataset}.vcf.gz --out {wdirpop}/{dataset}.pop --recode --keep {wdirpop}/poplist --maf {config[maf]} --max-missing {config[maxmissing]} --min-alleles 2 --max-alleles 2 --minQ {config[minQ]}
         fi
-        mv {wdirpop}/out.recode.vcf {wdirpop}/{dataset}.pop.vcf
+        mv {wdirpop}/{dataset}.pop.recode.vcf {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
         bcftools norm -d all {wdirpop}/{dataset}.pop.vcf.gz -o {wdirpop}/{dataset}.pop.vcf
         bgzip -f {wdirpop}/{dataset}.pop.vcf
-        tabix --csi {wdirpop}/{dataset}.pop.vcf.gz
+        tabix -f --csi {wdirpop}/{dataset}.pop.vcf.gz
         """
 
 
@@ -217,7 +217,7 @@ rule mask_low_snp_density:
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
     output:
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.tbi"
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.snp_dens.log"
     threads: workflow.cores
@@ -228,7 +228,6 @@ rule mask_low_snp_density:
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         # Make a BED file with three columns to mask regions in SMC++
         Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
-        tabix -f -p bed {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
         """
 	
 
