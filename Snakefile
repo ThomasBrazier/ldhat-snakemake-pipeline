@@ -200,7 +200,7 @@ rule roh:
     shell:
         """
         mkdir -p {wdirpop}/mask
-        plink --vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --homozyg --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
+        plink --vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --double-id --homozyg --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
         """
 
 
