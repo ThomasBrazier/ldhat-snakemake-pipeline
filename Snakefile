@@ -623,7 +623,6 @@ rule MCMC_report:
         gzip -c {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz
         Rscript --vanilla ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
         mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html
-        rm {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
         """
 
 
