@@ -105,7 +105,7 @@ According to LDhat official documentation, the script plot two figures. "In the 
 MCMC rates for each interval are mixed. Each line of panel B is the chain of a single interval. If there is convergence, all single interval chains should be stationary (no value/color fluctuation).
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Mixing of total map length."}
+```{r chain_convergence_plots, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Mixing of total map length."}
 # x11();
 par(mfrow=c(1,2));
 plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
@@ -114,6 +114,11 @@ image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample",
 ylab="log(rate) at SNP", main="Mixing of rates");
 par(mfrow=c(1,1));
 
+gc()
+```
+
+
+```{r chain_convergence_exportplots, message=FALSE, warning=FALSE, echo=FALSE}
 df = data.frame(x = 1:nrow(x), y= x[,1])
 
 p1 = ggplot(df, aes(x, y)) +
@@ -147,6 +152,7 @@ p = ggarrange(p1, p2, ncol = 2, widths = c(2,3))
 
 ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), plot = p, dpi = 150, width = 23, height = 12)
 
+gc()
 # # SAVE
 # jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
 # par(mfrow=c(1,2));
@@ -160,7 +166,7 @@ ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixin
 
 
 
-```{r, echo = TRUE}
+```{r meanRates, echo = TRUE}
 # rates.txt
 # each col is a SNP position
 # each row is an iteration
@@ -183,7 +189,7 @@ The mean posterior rate is the mean rate at each SNP position among all iteratio
 
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Posterior mean rates."}
+```{r posteriorRates_figure, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 8, fig.width = 14, fig.align="center", fig.cap = "Posterior mean rates."}
 # x11();
 if (locs.file==FALSE) {
   pos<-c(1:ncol(x))
@@ -199,6 +205,8 @@ xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
 lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
 lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75), lty="dotted");
 
+gc()
+
 # SAVE
 jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".posteriorRates.jpeg", sep = ""), width = 1280, height = 680)
 plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5), 	
@@ -206,6 +214,8 @@ xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
 lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
 lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75), lty="dotted");
 dev.off()
+
+gc()
 ```
 
 
