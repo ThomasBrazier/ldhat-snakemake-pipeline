@@ -639,10 +639,8 @@ rule Rmd_report:
         "envs/Renv.yaml"
     shell:
         """
-        export LANG=en_US.UTF-8
-	export LC_ALL=en_US.UTF-8
         Rscript vcf_qualityreport_chrom.R {dataset} {chrom}
-	mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
+        mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
         """
