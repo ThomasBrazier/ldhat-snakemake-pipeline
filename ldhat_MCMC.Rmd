@@ -118,6 +118,7 @@ df = data.frame(x = 1:nrow(x), y= x[,1])
 
 p1 = ggplot(df, aes(x, y)) +
   geom_line(colour = "DarkBlue") +
+  geom_vline(xintercept = burnin) +
   xlab("Sample") + ylab("Total map length") + 
   ggtitle("Mixing of total map length") + 
   theme_bw()
@@ -136,6 +137,7 @@ df2$Z = as.numeric(log(x[,2:ncol(x)]))
 
 p2 = ggplot(df2, aes(X, Y, fill = Z)) +
   geom_tile() +
+  geom_vline(xintercept = burnin) +
   scale_fill_viridis_c(option = "B") +
   xlab("Sample") + ylab("log(rate) at SNP") + 
   ggtitle("Mixing of rates") + 
