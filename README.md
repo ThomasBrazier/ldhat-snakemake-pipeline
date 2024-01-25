@@ -33,7 +33,6 @@ singularity pull faststructure.sif docker://tombrazier/faststructure
 singularity pull ldhat.sif docker://tombrazier/ldhat:v1.0
 singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
 singularity pull smcpp.sif docker://terhorst/smcpp:latest
-singularity pull pyrho.sif docker://tombrazier/pyrho:latest
 ```
 
 To install conda environments at the first run of the pipeline, use
@@ -154,6 +153,7 @@ Read the LDhat and LDhot manuals for further details on output files.
 ## Limitations
 
 * Only one chromosome at a time, at least until the rule 'split_chromosome' has been successfully passed one time
+* contig length in the vcf file are required for SMC++
 
 ## Known bugs
 
