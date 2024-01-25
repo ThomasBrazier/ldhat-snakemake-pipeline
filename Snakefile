@@ -615,7 +615,6 @@ rule MCMC_report:
     output:
         "{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz",
         "{wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html"
-    threads: workflow.cores
     conda:
         "envs/Renv.yaml"
     shell:
