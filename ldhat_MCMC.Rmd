@@ -114,6 +114,9 @@ image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample",
 ylab="log(rate) at SNP", main="Mixing of rates");
 par(mfrow=c(1,1));
 
+gc()
+
+
 df = data.frame(x = 1:nrow(x), y= x[,1])
 
 p1 = ggplot(df, aes(x, y)) +
@@ -146,6 +149,8 @@ p2 = ggplot(df2, aes(X, Y, fill = Z)) +
 p = ggarrange(p1, p2, ncol = 2, widths = c(2,3))
 
 ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), plot = p, dpi = 150, width = 23, height = 12)
+
+gc()
 
 # # SAVE
 # jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
