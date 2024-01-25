@@ -115,6 +115,9 @@ ylab="log(rate) at SNP", main="Mixing of rates");
 par(mfrow=c(1,1));
 
 gc()
+
+
+gc()
 ```
 
 
