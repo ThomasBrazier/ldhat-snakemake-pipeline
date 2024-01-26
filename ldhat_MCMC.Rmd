@@ -49,10 +49,12 @@ chromosome = params$chromosome
 bpen = params$bpen
 
 # TEST ONLY
-#wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
-#dataset = "Arabidopsis_thaliana_1001genomes"
-#chromosome = "1"
-#bpen = 25
+# wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
+# dataset = "Arabidopsis_thaliana_1001genomes"
+wdirpop = "data/Populus_tremula_Liu2022/K1.pop1"
+dataset = "Populus_tremula_Liu2022"
+chromosome = "chr1"
+bpen = 5
 
 # wdirpop = "data/Glycine_max_Yang2021/K2.pop1"
 # dataset = "Glycine_max_Yang2021"
@@ -119,53 +121,51 @@ gc()
 
 
 ```{r chain_convergence_exportplots, message=FALSE, warning=FALSE, echo=FALSE}
-df = data.frame(x = 1:nrow(x), y= x[,1])
+# df = data.frame(x = 1:nrow(x), y= x[,1])
 
-p1 = ggplot(df, aes(x, y)) +
-  geom_line(colour = "DarkBlue") +
-  geom_vline(xintercept = burnin) +
-  xlab("Sample") + ylab("Total map length") + 
-  ggtitle("Mixing of total map length") + 
-  theme_bw()
+# p1 = ggplot(df, aes(x, y)) +
+#   geom_line(colour = "DarkBlue") +
+#   geom_vline(xintercept = burnin) +
+#   xlab("Sample") + ylab("Total map length") + 
+#   ggtitle("Mixing of total map length") + 
+#   theme_bw()
+# ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".totalMapLength.jpeg", sep = ""), plot = p1, dpi = 150, width = 12, height = 12)
+
+# rm(p1)
+
+# gc()
+
+jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".totalMapLength.jpeg", sep = ""), width = 1280, height = 680)
+plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
+main="Mixing of total map length");
+abline(v = burnin)
+dev.off()
 
 
-#library(grid)
-#library(ggplotify)
-#p2 = as.grob(expression(image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
-#ylab="log(rate) at SNP", main="Mixing of rates")))
+# df2 = expand.grid(X = c(1:(nrow(x))),
+#                    Y = c(1:(ncol(x) - 1)))
+# df2$Z = as.numeric(log(x[,2:ncol(x)]))
 
-# TODO Reduce size (nb of sites) for very large datasets
-if (ncol(x) > 300000) {
-  x = x[,1:300000]
-}
+# p2 = ggplot(df2, aes(X, Y, fill = Z)) +
+#   geom_tile() +
+#   geom_vline(xintercept = burnin) +
+#   scale_fill_viridis_c(option = "B") +
+#   xlab("Sample") + ylab("log(rate) at SNP") + 
+#   ggtitle("Mixing of rates") + 
+#   theme_bw()
 
-df2 = expand.grid(X = c(1:(nrow(x))),
-                   Y = c(1:(ncol(x) - 1)))
-df2$Z = as.numeric(log(x[,2:ncol(x)]))
+# ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), plot = p2, dpi = 150, width = 18, height = 12)
 
-p2 = ggplot(df2, aes(X, Y, fill = Z)) +
-  geom_tile() +
-  geom_vline(xintercept = burnin) +
-  scale_fill_viridis_c(option = "B") +
-  xlab("Sample") + ylab("log(rate) at SNP") + 
-  ggtitle("Mixing of rates") + 
-  theme_bw()
+# rm(p2)
 
-p = ggarrange(p1, p2, ncol = 2, widths = c(2,3))
-
-ggsave(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), plot = p, dpi = 150, width = 23, height = 12)
-
-gc()
+# gc()
 
 # # SAVE
-# jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
-# par(mfrow=c(1,2));
-# plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
-# main="Mixing of total map length");
-# image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
-# ylab="log(rate) at SNP", main="Mixing of rates");
-# par(mfrow=c(1,1));
-# dev.off()
+jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
+image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
+ylab="log(rate) at SNP", main="Mixing of rates");
+abline(v = burnin)
+dev.off()
 ```
 
 
