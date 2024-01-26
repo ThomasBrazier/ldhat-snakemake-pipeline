@@ -216,9 +216,7 @@ rule mask_low_snp_density:
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.log",
         "{wdirpop}/mask/{dataset}.chromosome.{chrom}.nosex"
     output:
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz.tbi"
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
     log:
         "{wdirpop}/logs/{dataset}.chromosome.{chrom}.snp_dens.log"
     threads: workflow.cores
@@ -227,10 +225,6 @@ rule mask_low_snp_density:
     shell:
         """
         vcftools --gzvcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz --SNPdensity {config[snpdens.binsize]} --out {wdirpop}/mask/{dataset}.chromosome.{chrom}
-        # Make a BED file with three columns to mask regions in SMC++
-        Rscript scripts/bed_mask.R {wdirpop}/mask/{dataset}.chromosome.{chrom} {config[snpdens.binsize]} {config[snpdens.min]}
-        bgzip {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed
-        tabix -f {wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz
         """
 	
 
@@ -315,8 +309,7 @@ rule smcpp:
     """
     input:
         "{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz.tbi"
+        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
     output:
         "{wdirpop}/smcpp/{dataset}.{chrom}/plot.pdf",
         "{wdirpop}/smcpp/{dataset}.{chrom}/model.final.json",
@@ -333,12 +326,7 @@ rule smcpp:
         zcat {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz | grep '#CHROM' | cut -f 10- | tr '\t' '\n' > {wdirpop}/indlist
         samples=$(cat {wdirpop}/indlist | awk '{{printf("%s,",$0)}}' | sed 's/,\s*$//')
         tabix -f {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz
-        if [ {config[smcpp.cutoff]} -eq 0 ]
-        then
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples --mask /mnt/{wdirpop}/mask/{dataset}.chromosome.{chrom}.bed.gz
-        else
-        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samp    les -c {config[smcpp.cutoff]}
-        fi
+        singularity exec --bind $PWD:/mnt smcpp.sif smc++ vcf2smc /mnt/{wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz {chrom} Pop1:$samples -c {config[smcpp.cutoff]}
         # Fit the model using estimate:
         singularity exec --bind $PWD:/mnt smcpp.sif smc++ estimate -o /mnt/{wdirpop}/smcpp/{dataset}.{chrom}/ {config[mu]} /mnt/{wdirpop}/smcpp/{dataset}.{chrom}.smc.gz
         # The model.final.json output file contains fields named rho and N0. rho is the estimated population-scaled recombination rate per base-pair. To convert it to units of generations, multiply by 2 * N0.
