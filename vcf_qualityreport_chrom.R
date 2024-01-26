@@ -2,6 +2,7 @@
 args = commandArgs(trailingOnly = TRUE)
 vcf_file = args[1]
 chrom = args[2]
+wdirpop = args[3]
 library(rmarkdown)
 library(vcfR)
 library(adegenet)
