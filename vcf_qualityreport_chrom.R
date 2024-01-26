@@ -2,8 +2,8 @@
 args = commandArgs(trailingOnly = TRUE)
 dataset = args[1]
 chrom = args[2]
-wdirpop = args[3]
-bpen = args[4]
+wdirpop = as.character(args[3])
+bpen = as.character(args[4])
 library(rmarkdown)
 library(vcfR)
 library(adegenet)
