@@ -16,7 +16,8 @@ library(vcfR)
 library(adegenet)
 library(poppr)
 rmarkdown::render('ldhat_MCMC.Rmd',
-                  outfile = paste0(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".ldhat_MCMC.html"),
+                  output_file = paste0(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".ldhat_MCMC.html"),
+                  output_dir = paste0(wdirpop, "/MCMC"),
                   params = list(wdirpop = wdirpop,
                                 dataset = dataset,
                                 chromosome = chromosome,
