@@ -631,8 +631,8 @@ rule Rmd_report:
     conda:
         "envs/Renv.yaml"
     shell:
-        """
-        Rscript vcf_qualityreport_chrom.R {dataset} {chrom} {wdirpop}
+        """ 
+        Rscript vcf_qualityreport_chrom.R {dataset} {chrom} {wdirpop} {bpen}
         #mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
