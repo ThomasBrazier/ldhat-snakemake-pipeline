@@ -51,10 +51,10 @@ bpen = params$bpen
 # TEST ONLY
 # wdirpop = "data/Arabidopsis_thaliana_1001genomes/K1.pop1"
 # dataset = "Arabidopsis_thaliana_1001genomes"
-wdirpop = "data/Populus_tremula_Liu2022/K1.pop1"
-dataset = "Populus_tremula_Liu2022"
-chromosome = "chr1"
-bpen = 5
+# wdirpop = "data/Populus_tremula_Liu2022/K1.pop1"
+# dataset = "Populus_tremula_Liu2022"
+# chromosome = "chr1"
+# bpen = 5
 
 # wdirpop = "data/Glycine_max_Yang2021/K2.pop1"
 # dataset = "Glycine_max_Yang2021"
