@@ -74,7 +74,7 @@ rule sampling_pop:
     input:
         "{wdirpop}/poplist"
     output:
-    	"{wdirpop}/{dataset}.pop.vcf.gz"
+        "{wdirpop}/{dataset}.pop.vcf.gz"
     log:
         "{wdirpop}/logs/{dataset}.sampling_pop.log"
     threads: workflow.cores
@@ -162,7 +162,7 @@ rule phasing_vcf:
         "envs/shapeit.yaml"
     shell:
         """
-	    # Remove --thread {config[cores]} if causing errors
+        # Remove --thread {config[cores]} if causing errors
         shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --thread {config[cores]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         #shapeit --input-vcf {wdirpop}/{dataset}.chromosome.{chrom}.vcf.gz --output-max {wdirpop}/{dataset}.phased.chromosome.{chrom} --effective-size $(cat {wdirpop}/statistics/{dataset}.effective_size) --window {config[shapeitWindow]} --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.log --force
         shapeit -convert --input-haps {wdirpop}/{dataset}.phased.chromosome.{chrom} --output-vcf {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf --output-log {wdirpop}/logs/{dataset}.chromosome.{chrom}.shapeit.convert.log
@@ -248,11 +248,11 @@ rule pseudodiploid:
         if [ {config[pseudodiploid]} -eq 1 ]; then
             Rscript pseudodiploids.R {wdirpop} {chrom} 1
         else
-	        if [ {config[pseudodiploid]} -eq 2 ]; then
-	            Rscript pseudodiploids.R {wdirpop} {chrom} 2
+            if [ {config[pseudodiploid]} -eq 2 ]; then
+                Rscript pseudodiploids.R {wdirpop} {chrom} 2
             else
-	            cp {wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz {output}
-	        fi
+                cp {input} {output}
+            fi
         fi
         """
 
@@ -379,7 +379,7 @@ if config["large_sample"] == "yes":
             "{wdirpop}/logs/{dataset}.split_dataset.{chrom}.log"
         shell:
             """
-	    # The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
+        # The first line splits up the snps into chunks of whatever size you want (-l) and then the next line loops over each file and subsets the vcf according.
             bcftools query -f'%CHROM\t%POS\n' {wdirpop}/{dataset}.chromosome.{chrom}.ldhat.vcf.gz > {wdirpop}/{dataset}.{chrom}.positions 
             python split_dataset.py {wdirpop}/{dataset}.{chrom}.positions {wdirpop}/ldhat/{dataset}.{chrom} {config[cut_size]} {config[cut_overlap]}
             nbatch=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/nbatch_split)
@@ -388,7 +388,7 @@ if config["large_sample"] == "yes":
             done
             gzip -f {wdirpop}/ldhat/{dataset}.{chrom}/batch_*.recode.vcf
             echo $nbatch > {wdirpop}/ldhat/{dataset}.{chrom}/nbatch
-	        """
+            """
 
     rule convert:
         """
@@ -413,7 +413,7 @@ if config["large_sample"] == "yes":
             for i in $(seq $nbatch); do
             vcftools --gzvcf {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i.recode.vcf.gz --chr {chrom} --ldhat --out {wdirpop}/ldhat/{dataset}.{chrom}/batch_$i
             done
-     	    echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
+             echo "Done" > {wdirpop}/ldhat/{dataset}.{chrom}/convert.done
             """
 
 
@@ -487,14 +487,14 @@ if config["large_sample"] == "yes":
             echo "End of loop on split files."
             zcat bpen{bpen}.batch_$nbatch.res.txt.gz | tail -n +3 | tail -n +$(( $smalloverlap+1 )) >> bpen{bpen}.res_noheader.txt || true
             cd ../../../../..
-            echo "Loci	Mean_rho	Median	L95	U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+            echo "Loci    Mean_rho    Median    L95    U95" > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             Loci="-1.000"
             MeanRho=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$2}} END {{printf "%.0f", s}}')
             Median=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$3}} END {{printf "%.0f", s}}')
             L95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$4}} END {{printf "%.0f", s}}')
             U95=$(cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt | awk '{{s+=$5}} END {{printf "%.0f", s}}')
             echo "$Loci     $MeanRho        $Median $L95    $U95"
-            echo "$Loci	$MeanRho	$Median	$L95	$U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
+            echo "$Loci    $MeanRho    $Median    $L95    $U95" >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.header > {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cat {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res_noheader.txt >> {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt
             cp {wdirpop}/ldhat/{dataset}.{chrom}/bpen{bpen}.res.txt {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt
@@ -614,7 +614,6 @@ rule MCMC_report:
         """
         gzip -c {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt > {wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt.gz
         Rscript --vanilla ldhat_MCMC.R {wdirpop} {dataset} {chrom} {bpen}
-        #mv ldhat_MCMC.html {wdirpop}/MCMC/{dataset}.{chrom}.bpen{bpen}.ldhat_MCMC.html
         """
 
 
@@ -633,7 +632,6 @@ rule Rmd_report:
     shell:
         """ 
         Rscript vcf_qualityreport_chrom.R {dataset} {chrom} {wdirpop} {bpen}
-        #mv vcf_qualityreport_chrom.html {wdirpop}/{dataset}.{chrom}.bpen{bpen}.quality.html
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
         """
@@ -660,7 +658,7 @@ rule LDhot:
         nsim={config[ldhot.nsim]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot --seq /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.sites --loc /data/{wdirpop}/ldhat/{dataset}.{chrom}.{bpen}.ldhat.locs --lk /data/{wdirpop}/ldhat/{dataset}.lookup.{chrom}.new_lk.txt --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --nsim $nsim --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --hotdist {config[ldhot.hotdist]} --seed {config[ldhotseed]}
         singularity exec --bind $PWD:/data ldhot.sif ldhot_summary --res /data/{wdirpop}/ldhat/{dataset}.{chrom}.bpen{bpen}.res.txt --hot /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt --out /data/{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen} --sig {config[ldhot.sig]} --sigjoin {config[ldhot.sigjoin]} 
-	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
-	    gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
+        gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hot_summary.txt
+        gzip -f {wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt
         """
 
