@@ -1,5 +1,9 @@
 # A Snakemake pipeline to estimate LD-based recombination maps
 
+**Authors: Thomas Brazier<sup>1</sup> and Sylvain Glémin<sup>1</sup>**
+
+*Institutions: (1) UMR 6553 ECOBIO, University of Rennes*
+
 
 This pipeline is a BETA version in active development (use the `main` branch as `dev` regularly break things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
