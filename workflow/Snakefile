@@ -1,0 +1,48 @@
+"""
+Snakemake pipeline to estimate fine-scale recombination maps from polymorphism data
+"""
+
+
+dataset=config["dataset"] # Name of your dataset directory and prefix of your vcf file
+chrom=config["chrom"] # Name of the chromosome to analyse in your 'sample' dataset
+K=str(config["K"])
+pop=str(config["pop"])
+bpen=config["interval.bpen"]
+
+wdir=config["workingdir"] + dataset
+wdirpop=config["workingdir"] + dataset + "/K" + K + ".pop" + pop
+
+maxk=config["maxk"]
+k_structure=range(1,maxk+1)
+
+wildcard_constraints:
+    wdir=wdir,
+    wdirpop=wdirpop,
+    dataset=dataset,
+    chrom=chrom,
+    K=K,
+    pop=pop,
+    bpen=bpen
+
+
+include: "rules/popstructure.smk"
+# Run the pipeline for the first time with '--until k_statistics' option
+# Analyse the genetic structure of your dataset then set K (number of gneetic clusters) and pop (population ID in STRUCTURE output)
+include: "rules/samplingpop.smk"
+include: "rules/samplingchromosome.smk"
+# From this point you can run analyses in parallel on different chromosomes
+include: "rules/demography.smk"
+include: "rules/ldhatinterval.smk"
+include: "rules/ldhatreport.smk"
+include: "rules/ldhot.smk"
+
+
+
+rule all:
+    """
+    One ring to rule them all"
+    """
+    input:
+        target = expand("{wdirpop}/ldhot/{dataset}.{chrom}.bpen{bpen}.hotspots.txt.gz",wdirpop=wdirpop,dataset=dataset,chrom=chrom,bpen=bpen),
+    shell:
+        "echo 'Finished'"

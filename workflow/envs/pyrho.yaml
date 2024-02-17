@@ -1,0 +1,30 @@
+name: pyrho
+channels:
+  - mamba
+  - conda-forge
+  - bioconda
+dependencies:
+  - git
+  - r-base
+  - jq
+  - bcftools
+  - vcftools
+  - samtools
+  - htslib
+  - blas
+  - cyvcf2
+  - gsl
+  - htslib
+  - openssl>1.0
+  - pip
+  - python=3.8
+  - pip:
+    - cython
+    - msprime
+    - numba
+    - numpy
+    - scikit-learn
+    - pandas
+    - "--editable=git+https://github.com/popgenmethods/ldpop.git#egg=ldpop"
+    - tskit
+    - "--editable=git+https://github.com/popgenmethods/pyrho.git#egg=pyrho"

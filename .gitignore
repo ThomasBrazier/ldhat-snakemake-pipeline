@@ -11,6 +11,9 @@ data/
 *.pdf
 .~lock.Roadmap.ods#
 Roadmap.ods
+workflow/envs/ldpop/
+workflow/envs/src/ldpop
+workflow/envs/src/pyrho
 
 lk_files
 

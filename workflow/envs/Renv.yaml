@@ -1,0 +1,16 @@
+name: Renv
+channels:
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+  - r-base
+  - r-rmarkdown
+  - r-ade4
+  - r-adegenet
+  - r-vcfr
+  - r-poppr
+  - r-ggpubr
+  - r-yaml
+  - r-coda
+  - r-reshape

@@ -1,0 +1,12 @@
+name: vcftools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - vcftools
+  - htslib
+  - samtools=1.9
+  - bcftools
+  - plink>=1.9
+  - parallel
+  - r-base
