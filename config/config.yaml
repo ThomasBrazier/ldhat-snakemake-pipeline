@@ -25,7 +25,7 @@ pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) 
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
 cut_size: 2000 # Size of chunks to parallelize LDhat (number of SNPs)
 cut_overlap: 200 # Number of overlapping SNPs in each chunk
-smcpp.cutoff: 0 # Whether to apply a missing cutoff in vcf2smc (> 0) or not (=0); if not the bed mask is applied. Will automatically treat runs of homozgosity longer than -c base pairs as missing
+smcpp.cutoff: 0 # A missing cutoff in vcf2smc (> 0) or not (=0). Will automatically treat runs of homozgosity longer than -c base pairs as missing
 interval.bpen: 5 # Block penalty in LDhat
 interval.samp: 5000 # Sample every n iterations within the MCMC chain
 interval.iter: 10000000 # Total number of iterations to run the MCMC chain
