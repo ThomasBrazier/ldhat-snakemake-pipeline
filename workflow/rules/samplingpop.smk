@@ -40,8 +40,7 @@ rule sampling_pop:
     - Quality score
     """
     input:
-        "{wdirpop}/poplist",
-        {wdir}/{dataset}.vcf.gz
+        "{wdirpop}/poplist"
     output:
         "{wdirpop}/{dataset}.pop.vcf.gz"
     log:

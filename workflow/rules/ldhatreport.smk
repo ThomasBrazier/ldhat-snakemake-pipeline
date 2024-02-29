@@ -1,4 +1,3 @@
-
 rule MCMC_report:
     """
     Produce a Rmarkdown/pdf report
