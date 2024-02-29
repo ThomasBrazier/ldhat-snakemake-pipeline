@@ -32,7 +32,7 @@ This document is a file automatically computed from a VCF candidate population d
 dataset = params$dat
 chrom = params$chrom
 
-yaml_config = read_yaml(paste0("data/", dataset, "/config.yaml"))
+yaml_config = read_yaml(paste0("../../data/", dataset, "/config.yaml"))
 K = yaml_config$K
 pop = yaml_config$pop
 
@@ -47,7 +47,7 @@ if (dataset == "") {
 # dataset = "Arabidopsis_thaliana_1001genomes" # DEBUG ONLY
 # wdirpop = list.dirs(path = paste("data/", dataset, sep = ""))
 # wdirpop = wdirpop[grepl("K", wdirpop)]
-vcf_file = paste("data/", dataset, "/K", K, ".pop", pop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
+vcf_file = paste("../../data/", dataset, "/K", K, ".pop", pop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
 cat("Processing dataset", dataset, "chromosome", chrom, "\n")
 # Read the vcf
 vcf = read.vcfR(vcf_file, verbose = FALSE)
