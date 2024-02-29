@@ -67,7 +67,7 @@ bpen = params$bpen
 cat("Dataset:", dataset, "\n")
 cat("Chromosome:", chromosome, "\n")
 
-yaml_config = read_yaml(paste0("data/", dataset, "/config.yaml"))
+yaml_config = read_yaml(paste0("../../data/", dataset, "/config.yaml"))
 burnin = yaml_config$ldhat.burn
 sampling = yaml_config$interval.samp
 iterations = yaml_config$interval.iter
@@ -80,8 +80,8 @@ cat("Burnin:", burnin,"\n",
 ## Summarise results with LDhat built-in functions
 
 ```{r summariseInterval, echo=FALSE}
-mcmc.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
-locs.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".",  bpen, ".ldhat.locs", sep = "")
+mcmc.file = paste("../..", wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".rates.txt.gz", sep = "")
+locs.file = paste("../..", wdirpop, "/ldhat/", dataset, ".", chromosome, ".",  bpen, ".ldhat.locs", sep = "")
 
 rates.file = gzfile(mcmc.file)
 burn.in = burnin
@@ -135,7 +135,7 @@ gc()
 
 # gc()
 
-jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".totalMapLength.jpeg", sep = ""), width = 1280, height = 680)
+jpeg(paste("../..", wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".totalMapLength.jpeg", sep = ""), width = 1280, height = 680)
 plot(x[,1], type="s", col=rgb(0,0,0.5), xlab="Sample", ylab="Total map length", 
 main="Mixing of total map length");
 abline(v = burnin)
@@ -161,7 +161,7 @@ dev.off()
 # gc()
 
 # # SAVE
-jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
+jpeg(paste("../..", wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".mixingRates.jpeg", sep = ""), width = 1280, height = 680)
 image(x=c(1:nrow(x)), y=c(1:(ncol(x)-1)), z=log(x[,2:ncol(x)]), xlab="Sample", 
 ylab="log(rate) at SNP", main="Mixing of rates");
 abline(v = burnin)
@@ -174,8 +174,8 @@ dev.off()
 # rates.txt
 # each col is a SNP position
 # each row is an iteration
-means<-apply(x[low:nrow(x),], 2, mean, na.rm=T);
-q.95<-apply(x[low:nrow(x),], 2, quantile, probs=c(0.025, 0.5, 0.975), na.rm=T);
+means = apply(x[low:nrow(x),], 2, mean, na.rm=T);
+q.95 = apply(x[low:nrow(x),], 2, quantile, probs=c(0.025, 0.5, 0.975), na.rm=T);
 
 cat(paste("\nMean posterior total map length (4Ner) = ", signif(means[1], 4), "\n",
           sep=""));
@@ -212,7 +212,7 @@ lines(pos[1:(length(pos)-1)], y=q.95[3,2:length(means)], type="s", col=grey(0.75
 gc()
 
 # SAVE
-jpeg(paste(wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".posteriorRates.jpeg", sep = ""), width = 1280, height = 680)
+jpeg(paste("../..", wdirpop, "/MCMC/", dataset, ".", chromosome, ".bpen", bpen, ".posteriorRates.jpeg", sep = ""), width = 1280, height = 680)
 plot(pos[1:(length(pos)-1)], y=means[2:length(means)], type="s", col=rgb(0,0,0.5), 	
 xlab=xlab, ylab="Posterior mean rate", main="Posterior mean rates");
 lines(pos[1:(length(pos)-1)], y=q.95[1,2:length(means)], type="s", col=grey(0.75), lty="dotted");
@@ -225,7 +225,7 @@ gc()
 
 
 ```{r, echo = TRUE}
-op<-cbind(means, t(q.95));
+op = cbind(means, t(q.95));
 colnames(op)<-c("Mean", "q2.5", "Median", "q97.5");
 
 # op
@@ -235,7 +235,7 @@ colnames(op)<-c("Mean", "q2.5", "Median", "q97.5");
 The estimated recombination landscape as a final validation.
 
 ```{r plotLandscape, message=FALSE, warning=FALSE, echo=FALSE, fig.height = 11, fig.width = 15, fig.align="center", fig.cap = "Estimated recombination landscape."}
-res.file = paste(wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt.gz", sep = "")
+res.file = paste("../..", wdirpop, "/ldhat/", dataset, ".", chromosome, ".bpen", bpen, ".res.txt.gz", sep = "")
 res = read.table(gzfile(res.file), header = F, skip = 2)
 colnames(res) = c("loci", "mean_rho", "median_rho", "lower", "upper")
 res$loci = res$loci/10
