@@ -53,26 +53,44 @@ wget https://github.com/auton1/LDhat/tree/master/lk_files && gunzip lk_files/*.g
 ```
 
 
+## Input
+
+Required input files are:
+* '<dataset>.vcf.gz' in bgzipped format
+* '<dataset>.chromosomes' is a list of chromosome names (one name per row)
+* a 'samplelist' file (optional) if you wish to subset a list of individuals from the original dataset
+
+
+
 ## Usage
 
 Put your `<dataset>` directory into `./data`.
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
 
-You can configure your pipeline in the `config.yaml` file that you must copy into the <dataset> directory.
+You can configure your pipeline in the `config.yaml` file.
+
 
 You need a first step of data preprocessing to infer the number of independent genetic populations in the sample (based on FastStructure [[1]](#1)) and output summary statistics to choose the most appropriate population in further analyses. It produces a file `structure/poplist.*.*` which contains the list of individuals to sample in the main pipeline.
-Once population structure is inferred from 'popstatistics.<K>', 'structure/chooseK' and 'structure/distruct.<K>.svg', run the main pipeline after specifying the chosen <K> number of genetic clusters to consider and the <population> to sample in your config.yaml.
 
 ```
 ncores=<number of cores to use>
-snakemake -s data_preprocessing.snake --use-conda --use-singularity --cores $ncores -j $ncores --config dataset=<dataset> chromosome=<chromosome>
+snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores -j $ncores --until k_statistics --config dataset=<dataset> chromosome=<chromosome>
 ```
 
-After running the preprocessing step, run directly the main pipeline for a <dataset> and a single <chromosome> (don't forget to configure the `config.yaml` with your desired population).
+
+Once population structure is inferred from 'popstatistics.<K>', 'structure/chooseK' and 'structure/distruct.<K>.svg', run the main pipeline for a <dataset> and a single <chromosome> after specifying the chosen <K> number of genetic clusters to consider and the <population> to sample in your config.yaml.
+
 
 ```
-snakemake -s Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
+snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
 ```
+
+You can also decide that you are not interested in recombination hotspot detection
+
+```
+snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores --until Rmd_report --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
+```
+
 
 Alternatively, you can use the Singularity launcher script and modify it for your custom needs.
 
@@ -84,9 +102,6 @@ singularity bash.sh <dataset> <chromosome>
 
 At the current stage, you can run as many <dataset> as you want in parallel, as directories are isolated, but only one <chromosome> at a time to avoid interferences beween Snakemake parallel processes accessing the same files. This issue is on a list of future improvements.
 Only one population can be sampled in a sample directory. For analysing more than one population, duplicate the sample directory.
-
-
-A `clean.sh` bash script is available to clean a <dataset> directory from temporary files which can use a lot of disk storage (scrip still in development).
 
 
 ## Details of the main pipeline

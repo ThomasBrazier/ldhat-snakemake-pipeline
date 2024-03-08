@@ -112,8 +112,8 @@ rule pseudodiploid:
     Method 2. Keep both haplotypes and resample among individuals
     """
     input:
-        "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
-        "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
+        vcf = "{wdirpop}/{dataset}.chromosome.{chrom}.phased.vcf.gz",
+        snpden = "{wdirpop}/mask/{dataset}.chromosome.{chrom}.snpden"
     output:
         "{wdirpop}/{dataset}.chromosome.{chrom}.pseudodiploid.vcf.gz"
     log:
@@ -128,7 +128,7 @@ rule pseudodiploid:
             if [ {config[pseudodiploid]} -eq 2 ]; then
                 Rscript workflow/scripts/pseudodiploids.R {wdirpop} {chrom} 2
             else
-                cp {input} {output}
+                cp {input.vcf} {output}
             fi
         fi
         """
