@@ -86,8 +86,8 @@ locs.file = paste("../../", wdirpop, "/ldhat/", dataset, ".", chromosome, ".",  
 rates.file = gzfile(mcmc.file)
 burn.in = burnin
 
-x = read.table(rates.file, skip=1, fill=T);
-x = as.matrix(x);
+x = read.table(rates.file, skip=1, fill=T)
+x = as.matrix(x)
 
 # low = as.integer(nrow(x)*burn.in/100);
 low = burn.in

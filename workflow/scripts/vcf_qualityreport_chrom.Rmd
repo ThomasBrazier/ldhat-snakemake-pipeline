@@ -5,6 +5,7 @@ output: html_document
 params:
   dat: ""
   chrom: ""
+  wdirpop: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -26,28 +27,16 @@ This document is a file automatically computed from a VCF candidate population d
 
 
 ```{r data, echo = TRUE}
-# <dataset> must be passed in argument
-# args = commandArgs(trailingOnly=TRUE)
-# dataset = args[1]
 dataset = params$dat
 chrom = params$chrom
+wdirpop = params$wdirpop
 
-yaml_config = read_yaml(paste0("../../data/", dataset, "/config.yaml"))
+
+yaml_config = read_yaml(paste0("../../", wdirpop, "/", dataset, "/config.yaml"))
 K = yaml_config$K
 pop = yaml_config$pop
 
-# test if there is at least one argument: if not, return an error
-# if (length(args) != 1) {
-#  stop("<dataset> must be passed in argument", call.=FALSE)
-# }
-if (dataset == "") {
- stop("<dataset> must be passed in argument", call.=FALSE)
-}
-
-# dataset = "Arabidopsis_thaliana_1001genomes" # DEBUG ONLY
-# wdirpop = list.dirs(path = paste("data/", dataset, sep = ""))
-# wdirpop = wdirpop[grepl("K", wdirpop)]
-vcf_file = paste("../../data/", dataset, "/K", K, ".pop", pop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
+vcf_file = paste("../../", wdirpop, "/", dataset, "/K", K, ".pop", pop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
 cat("Processing dataset", dataset, "chromosome", chrom, "\n")
 # Read the vcf
 vcf = read.vcfR(vcf_file, verbose = FALSE)
