@@ -3,7 +3,7 @@
 #SBATCH --mail-type=all
 #SBATCH --mem=400GB
 #SBATCH --cpus-per-task=16
-#SBATCH --time=6-60:00:00
+#SBATCH --time=22-60:00:00
 #SBATCH --job-name=LDmap
 
 # Load env
