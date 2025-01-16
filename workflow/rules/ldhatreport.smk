@@ -32,7 +32,7 @@ rule Rmd_report:
         "../envs/Renv.yaml"
     shell:
         """ 
-        Rscript workflow/scripts/vcf_qualityreport_chrom.R {dataset} {chrom} {wdirpop} {bpen}
         # Copy the .yaml config
         cp {wdir}/config.yaml {wdirpop}/{dataset}.{chrom}.bpen{bpen}.yaml
+        Rscript workflow/scripts/vcf_qualityreport_chrom.R {dataset} {chrom} {wdirpop} {bpen}
         """

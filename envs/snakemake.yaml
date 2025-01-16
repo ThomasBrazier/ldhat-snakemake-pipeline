@@ -1,0 +1,9 @@
+name: snakemake
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda
+  - mamba
+  - snakemake>7.28
+  - singularity>3.0

@@ -5,8 +5,8 @@ latency-wait: 60 # The time in seconds Snakemake will wait for output files afte
 large_sample: "no" # yes or no, whether to run the pipeline in small chunks of SNPs or complete chromosomes
 # Large chromosomes require 'yes' to be tractable
 # Sample config
-dataset: "COP" # Name of the dataset
-chrom: "1" # Chromosome to sample
+dataset: "dataset_name" # Name of the dataset
+chrom: "chr_name" # Chromosome to sample
 maf: 0.05 # The minimum minor allele frequency required
 missing: 0.1 # The maximum amount of missing data allowed
 maxmissing: 0.9 # The required proportion of data (0.9 means that at less than 10% of sites are missing)
@@ -20,8 +20,8 @@ shapeitWindow: 2 # Window size in Mb for phasing with ShapeIt2
 mu: 1.28e-8 # The population mutation rate
 theta: 0.001 # The theta value set in LDhat
 snpdens.binsize: 100000 # Sliding windows size where to measure SNP density
-ploidy: 1
-pseudodiploid: 0 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
+ploidy: 1 # Ploidy level
+pseudodiploid: 1 # 0 or 1; whether to (0) keep diploid individuals (outcrosser) or (1) re-create pseudo-diploids (selfer species)
 completelk: "no" # yes or no, whether to compute a complete likelihood table in LDhat (yes can be long) 
 cut_size: 2000 # Size of chunks to parallelize LDhat (number of SNPs)
 cut_overlap: 200 # Number of overlapping SNPs in each chunk

@@ -6,6 +6,7 @@ params:
   dat: ""
   chrom: ""
   wdirpop: ""
+  bpen: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -30,14 +31,16 @@ This document is a file automatically computed from a VCF candidate population d
 dataset = params$dat
 chrom = params$chrom
 wdirpop = params$wdirpop
+bpen = params$bpen
 
-
-yaml_config = read_yaml(paste0("../../", wdirpop, "/", dataset, "/config.yaml"))
+yaml_config = read_yaml(paste0("../../", wdirpop, "/", dataset, ".", chrom, ".bpen", bpen, ".yaml"))
 K = yaml_config$K
 pop = yaml_config$pop
 
-vcf_file = paste("../../", wdirpop, "/", dataset, "/K", K, ".pop", pop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
+vcf_file = paste("../../", wdirpop, "/", dataset, ".chromosome.", chrom, ".ldhat.vcf.gz", sep = "")
 cat("Processing dataset", dataset, "chromosome", chrom, "\n")
+print(vcf_file)
+
 # Read the vcf
 vcf = read.vcfR(vcf_file, verbose = FALSE)
 

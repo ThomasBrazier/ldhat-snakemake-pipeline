@@ -5,7 +5,7 @@
 *Institutions: (1) UMR 6553 ECOBIO, University of Rennes*
 
 
-This pipeline is a BETA version in active development (use the `main` branch as `dev` regularly break things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
+This pipeline is a BETA version in active development (use the `main` branch as `dev` is regularly breaking things). It is fully functional but not error-prone and not optimized (e.g. better use of parallelism). Please report bugs and errors for improvement.
 
 
 ## Install
@@ -14,10 +14,10 @@ This pipeline is a BETA version in active development (use the `main` branch as 
 
 Strict dependencies must be installed before first run:
 - conda
-- snakemake
+- snakemake >= 7.28
 - singularity (> 3.0)
 
-After installing dependencies, clone the github directory where you want to perform computations. The github directory will be your working directory.
+After installing dependencies, clone the github directory where you want to perform computations. This github directory will be your working directory.
 
 ```
 git clone https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git 
@@ -39,23 +39,24 @@ singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
 singularity pull smcpp.sif docker://terhorst/smcpp:latest
 ```
 
-To install conda environments at the first run of the pipeline, use
+Pre-generated look-up tables are necessary for LDhat. Gzipped look-up tables are already included in the github repository. Make sure to unzip them in the working directory.
 
 ```
-snakemake -s data_preprocessing.snake --use-conda --conda-create-envs-only
-snakemake --use-conda --conda-create-envs-only
+gunzip -k lk_files/*.gz
 ```
 
-Pre-generated look-up tables are necessary for LDhat. Make sure to download them in the working directory.
+To install conda environments at the first run of the pipeline (make sure you give a correct .yaml config file), use
 
 ```
-wget https://github.com/auton1/LDhat/tree/master/lk_files && gunzip lk_files/*.gz
+snakemake -s workflow/Snakefile --configfile config/config.yaml --use-conda --conda-create-envs-only --cores=1
 ```
+
 
 
 ## Input
 
 Required input files are:
+
 * '<dataset>.vcf.gz' in bgzipped format
 * '<dataset>.chromosomes' is a list of chromosome names (one name per row)
 * a 'samplelist' file (optional) if you wish to subset a list of individuals from the original dataset
@@ -92,12 +93,12 @@ snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores --
 ```
 
 
-Alternatively, you can use the Singularity launcher script and modify it for your custom needs.
+Alternatively, you can use the Slurm launcher script and modify it for your custom needs.
 
 ```
 bash.sh <dataset> <chromosome>
 # or
-singularity bash.sh <dataset> <chromosome>
+sbatch bash.sh <dataset> <chromosome>
 ```
 
 At the current stage, you can run as many <dataset> as you want in parallel, as directories are isolated, but only one <chromosome> at a time to avoid interferences beween Snakemake parallel processes accessing the same files. This issue is on a list of future improvements.
