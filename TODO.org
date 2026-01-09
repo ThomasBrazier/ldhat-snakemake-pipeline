@@ -1,12 +1,12 @@
 TODO
 
-TODO Parallelization
+** TODO Parallelization
     TODO LDhot
     TODO Ldhat
     TODO faststructure
-TODO Run all chromosomes together instead of one at a time
-TODO Better integration of first step for demography (one round instead of two rounds)
-TODO Deal with temp files
+** TODO Run all chromosomes together instead of one at a time
+** TODO Better integration of first step for demography (one round instead of two rounds)
+** TODO Deal with temp files
 
 
 * Data
