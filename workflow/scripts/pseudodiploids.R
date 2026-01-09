@@ -60,7 +60,7 @@ colnames(new_genotypes)[1] = "FORMAT"
 vcf@gt = new_genotypes
 print(vcf)
 
-print(matrix(new_genotypes[1:5,1:10], nrow = 5, ncol = 10))
+# print(matrix(new_genotypes[1:5,1:10], nrow = 5, ncol = 10))
 
 cat("Write new vcf file.\n")
 # Write a new pseudodiploid vcf
