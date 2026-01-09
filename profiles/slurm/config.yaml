@@ -1,0 +1,198 @@
+executor: slurm
+use-conda: True
+jobs: 25 # Have up to N jobs submitted at any given time
+latency-wait: 100 # Wait N seconds for output files due to latency
+retries: 6 # Retry jobs N times.
+
+# These resources will be applied to all rules. Can be overriden on a per-rule basis below.
+default-resources:
+  mem_mb: attempt * 2000
+  mem_mb_reduced: (attempt * 2000) * 0.9 # Reduced mem allocated to prevent OOM errors
+  cpus_per_task: 1
+  slurm_partition: "partition_name"
+  slurm_account: "account_name" # Same as sbatch -A. Not all clusters use this.
+  runtime: 2880 # In minutes
+
+
+# Control number of threads each rule will use.
+set-threads:
+  # Population structure
+  trimming_vcf: 1
+  vcf2structure: 1
+  faststructure: 1 
+  distruct: 1
+  choose_k: 16
+  # Sampling pop
+  poplist: 1
+  sampling_pop: 1
+  effective_size: 1
+  # Sampling chromosome
+  split_chromosome: 1
+  phasing_vcf: 1
+  roh: 1
+  mask_low_snp_density: 1
+  pseudodiploid: 1
+  gzpseudodiploid: 1
+  # Demography 
+  subset_ldhat: 1
+  smcpp: 1
+  LDpop: 1
+  # ldhat interval
+  split_dataset: 1
+  convert: 1
+  interval_stat_split: 1
+  interval: 1
+  concatenate: 1
+  LDhot_convert: 1
+  stat: 1
+  # ldhot
+  LDhot: 1
+  # Report
+  MCMC_report: 1
+  Rmd_report: 1
+
+
+# Control other resources used by each rule.
+set-resources:
+# Population structure
+  trimming_vcf:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  vcf2structure:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  faststructure:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task: 
+  distruct:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  choose_k:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # Sampling pop
+  poplist:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  sampling_pop:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  effective_size:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # Sampling chromosome
+  split_chromosome:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  phasing_vcf:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  roh:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  mask_low_snp_density:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  pseudodiploid:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  gzpseudodiploid:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # Demography 
+  subset_ldhat:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  smcpp:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  LDpop:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # ldhat interval
+  split_dataset:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  convert:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  interval_stat_split:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  interval:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  concatenate:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  LDhot_convert:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  stat:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # ldhot
+  LDhot:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  # Report
+  MCMC_report:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
+  Rmd_report:
+    mem_mb: attempt * 2000
+    #     slurm_partition:
+    #     runtime:
+    #     cpus_per_task:
