@@ -1,9 +1,0 @@
-__default__:
-    account: tbrazier
-    node: 1
-    ntasks: 1
-    n: 1
-    p: genouest
-    cpusPerTask: 8
-    memPerCpu: 515799
-    time: 12-60:00:00

@@ -1,9 +1,0 @@
-__default__:
-    account: username
-    node: 1
-    ntasks: 1
-    n: 1
-    p: partition
-    cpusPerTask: 8
-    memPerCpu: 10000
-    time: 12-60:00:00

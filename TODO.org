@@ -1,6 +1,16 @@
+TODO
+
+TODO Parallelization
+    TODO LDhot
+    TODO Ldhat
+    TODO faststructure
+TODO Run all chromosomes together instead of one at a time
+TODO Better integration of first step for demography (one round instead of two rounds)
+TODO Deal with temp files
+
+
 * Data
 ** Add a validation step for data format (e.g. vcf header, contig length...)
-
 
 * Important improvements
 ** DONE Make Largesample works

@@ -14,8 +14,11 @@ This pipeline is a BETA version in active development (use the `main` branch as 
 
 Strict dependencies must be installed before first run:
 - conda
-- snakemake >= 7.28
+- snakemake >= 8
+- snakemake-executor-plugin-slurm
 - singularity (> 3.0)
+
+### Installation
 
 After installing dependencies, clone the github directory where you want to perform computations. This github directory will be your working directory.
 
@@ -23,34 +26,7 @@ After installing dependencies, clone the github directory where you want to perf
 git clone https://github.com/ThomasBrazier/LDRecombinationMaps-pipeline.git 
 ```
 
-LDpop must be installed locally from the github directory:
-
-```
-git clone https://github.com/popgenmethods/ldpop.git ldpop/
-```
-
-
-In addition, Singularity images are required for additional softwares. Run within the working directory:
-
-```
-singularity pull faststructure.sif docker://tombrazier/faststructure
-singularity pull ldhat.sif docker://tombrazier/ldhat:v1.0
-singularity pull ldhot.sif docker://tombrazier/ldhot:v1.0
-singularity pull smcpp.sif docker://terhorst/smcpp:latest
-```
-
-Pre-generated look-up tables are necessary for LDhat. Gzipped look-up tables are already included in the github repository. Make sure to unzip them in the working directory.
-
-```
-gunzip -k lk_files/*.gz
-```
-
-To install conda environments at the first run of the pipeline (make sure you give a correct .yaml config file), use
-
-```
-snakemake -s workflow/Snakefile --configfile config/config.yaml --use-conda --conda-create-envs-only --cores=1
-```
-
+Then, install necessary softwares with the `install.sh` script.
 
 
 ## Input
@@ -65,13 +41,21 @@ Required input files are:
 
 ## Usage
 
-Put your `<dataset>` directory into `./data`.
+Put your `<dataset>` directory into teh working directory `./data`.
 By default, working directory is `data/`. To run in a different directory, change the value in `config.yaml` or in command line.
 
-You can configure your pipeline in the `config.yaml` file.
+You can configure your pipeline settings in the `config.yaml` file and the cluster profile (e.g. slurm settings for time, memory and CPU) in `profiles/slumr/config.yaml`.
 
 
 You need a first step of data preprocessing to infer the number of independent genetic populations in the sample (based on FastStructure [[1]](#1)) and output summary statistics to choose the most appropriate population in further analyses. It produces a file `structure/poplist.*.*` which contains the list of individuals to sample in the main pipeline.
+
+Launch a job on the cluster: 
+
+```
+sbatch launch_preprocessing_structure.sh <dataset> <chromosome>
+```
+
+or alternatively on CLI:
 
 ```
 ncores=<number of cores to use>
@@ -81,6 +65,13 @@ snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores -j
 
 Once population structure is inferred from 'popstatistics.<K>', 'structure/chooseK' and 'structure/distruct.<K>.svg', run the main pipeline for a <dataset> and a single <chromosome> after specifying the chosen <K> number of genetic clusters to consider and the <population> to sample in your config.yaml.
 
+Launch a job on the cluster: 
+
+```
+sbatch launch.sh <dataset> <chromosome>
+```
+
+or alternatively on CLI:
 
 ```
 snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores --config dataset=<dataset> --K <K> --pop <pop> --chrom <chromosome>
@@ -96,9 +87,9 @@ snakemake -s workflow/Snakefile --use-conda --use-singularity --cores $ncores --
 Alternatively, you can use the Slurm launcher script and modify it for your custom needs.
 
 ```
-bash.sh <dataset> <chromosome>
-# or
-sbatch bash.sh <dataset> <chromosome>
+./launch.sh <dataset> <chromosome> # Run in CLI
+# or 
+sbatch launch.sh <dataset> <chromosome> # Run in a SLURM job
 ```
 
 At the current stage, you can run as many <dataset> as you want in parallel, as directories are isolated, but only one <chromosome> at a time to avoid interferences beween Snakemake parallel processes accessing the same files. This issue is on a list of future improvements.
